@@ -1,3 +1,6 @@
+*package-lock.json
+*package.json
+
 # Dependencies
 node_modules/
 
@@ -7,9 +10,5 @@ logs/
 
 # Environment variables
 .env
-
-*package-lock.json
-*package.json
-
-*dist
 *tsconfig.json
+*dist
