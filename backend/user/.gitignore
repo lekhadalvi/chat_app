@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Logs
+logs/
+*.log
+
+# Environment variables
+.env
+
+*package-lock.json
+*package.json
+
+*dist
+*tsconfig.json
