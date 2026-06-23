@@ -10,9 +10,9 @@ const PORT = process.env.PORT
 
 connectDB();
 export const redisClient = createClient({
-    url: process.env.REDIS_URL!,
-});
-redisClient.connect().then(()=>console.log("connected to redis")).catch(console.error);
+    url:process.env.REDIS_URL!
+})
+redisClient.connect().then(()=>console.log("connected to redis")).catch(console.error)
 
 app.listen(PORT ,()=>{
 console.log(`🚀 Server running on http://localhost:${PORT}`);
