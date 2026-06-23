@@ -29,3 +29,20 @@ export const closeRabbitmq = async (): Promise<void> => {
     console.error("❌ Error closing RabbitMQ:", error);
   }
 };
+export const publishToQueue = async(queue:string, message:any) => {
+
+  try {
+    if 
+    (!channel){
+        console.log("No Channel Found")
+    }
+    const queueexsist = await channel?.assertQueue(queue,{
+        durable:true
+    })
+    const sendmessage = await channel?.sendToQueue(queue, Buffer.from(JSON.stringify(message)),{
+        persistent:true
+    })
+  } catch (e : any) {
+    console.log(e.message)
+  }
+};
