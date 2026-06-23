@@ -11,3 +11,4 @@ logs/
 # Environment variables
 .env
 *tsconfig.json
+*dist
