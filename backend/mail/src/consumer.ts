@@ -1,6 +1,9 @@
 import amqp from "amqplib";
 import type { Channel } from "amqplib";
 import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 let channel: Channel | null = null;
 
