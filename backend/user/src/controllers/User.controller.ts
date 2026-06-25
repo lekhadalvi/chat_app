@@ -6,7 +6,7 @@ export const LoginController = TryCatch(async(req,res)=>{
     const {email} = req.body
 
     const rateLimitKey = `otp:rate:limit:${email}`
-    const rateLimit = await redisClient
+    const rateLimit = await redisClient.get(rateLimitKey);
 
     if(rateLimit) {
         res.status(409).json({message:"to many request at a time,please wait for some time"})
