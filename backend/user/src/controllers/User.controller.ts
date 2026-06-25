@@ -19,13 +19,11 @@ export const LoginController = TryCatch(async(req,res)=>{
     await redisClient.set(rateLimitKey,"true",{EX:60})
 
     const message = {
-        to : email,
-        subject :"your otp code is",
-        body:`your otp is ${otp}.only valid for 5 min`
-
+        email,
+        otp,
     };
 
-    await publishToQueue("send otp" ,message)
+    await publishToQueue("send-otp" ,message)
     res.status(200).json({message:"otp send to your mail"})
 
 })
