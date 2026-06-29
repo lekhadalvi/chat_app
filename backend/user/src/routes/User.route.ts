@@ -6,6 +6,6 @@ const Userrouter = express.Router()
 
 Userrouter.post("/login",LoginController)
 Userrouter.post("/verify",VerifyController)
-Userrouter.post("/getme",isAuth,myProfile)
+Userrouter.get("/me",isAuth,myProfile)
 
 export default Userrouter
