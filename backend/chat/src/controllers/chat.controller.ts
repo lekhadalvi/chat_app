@@ -36,4 +36,10 @@ export const fetchAllChats = TryCatch(async (req: AuthenticatedRequest, res) => 
 
     const chats = await Chat.find({ users: userId }).sort({ updatedAt: -1 });
     res.status(200).json({ chats });
+
+    const chatwithUserData = await Promise.all(
+        chats.map(async(chat)=>{
+            const otherUserId =chat.users.find((id)>id !== userId)
+        })
+    )
 })
