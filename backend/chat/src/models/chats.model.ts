@@ -2,9 +2,9 @@ import mongoose,{Document,  Schema,} from "mongoose";
 
 export interface IChat extends Document {
     users : string[];
-    latestMessage : {
-text : string;
-sender : string;
+    latestMessage? : {
+        text : string;
+        sender : string;
     };
     createdAt : Date;
     updatedAt : Date;
@@ -15,14 +15,12 @@ const schema : Schema <IChat> = new Schema ({
         type: String,
         required : [true,"users are required"]
     }],
-    latestMessage : {  
+    latestMessage : {
         text : {
             type: String,
-            required : [true,"latest message text is required"]
         },
         sender : {
             type: String,
-            required : [true,"latest message sender is required"]
         }
     },
     createdAt : {
