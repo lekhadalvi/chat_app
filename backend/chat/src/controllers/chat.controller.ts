@@ -39,7 +39,7 @@ export const fetchAllChats = TryCatch(async (req: AuthenticatedRequest, res) => 
 
     const chatwithUserData = await Promise.all(
         chats.map(async(chat)=>{
-            const otherUserId =chat.users.find((id)>id !== userId)
+            const otherUserId =chat.users.find((id)=>id !== userId)
         })
     )
 })
