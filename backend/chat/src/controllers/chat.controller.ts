@@ -89,7 +89,6 @@ export const fetchAllChats = TryCatch<AuthenticatedRequest>(async (req, res) => 
     res.json({ chats: chatwithUserData });
 });
 
-
 export const sendMessage = TryCatch(async(req:AuthenticatedRequest,res) =>{
     const senderId = req.user?._id
     const {chatId ,text} = req.body
@@ -171,4 +170,62 @@ export const sendMessage = TryCatch(async(req:AuthenticatedRequest,res) =>{
    //emit socket event to the other user
    
    res.status(201).json({ message: savedMessage, sender: senderId })
+})
+
+export const getMessageByChat = TryCatch<AuthenticatedRequest>(async (req, res) => {
+    const userId = req.user?._id;
+    const { chatId } = req.params;
+
+    if (!userId) {
+        res.status(401).json({ message: "please login" });
+        return;
+    }
+
+    if (!chatId) {
+        res.status(400).json({ message: "chatId is required" });
+        return;
+    }
+
+    const chat = await Chat.findById(chatId);
+    if (!chat) {
+        res.status(404).json({ message: "chat not found" });
+        return;
+    }
+
+    const isUserInChat = chat.users.some(user => user.toString() === userId.toString());
+    if (!isUserInChat) {
+        res.status(403).json({ message: "you are not a member of this chat" });
+        return;
+    }
+
+    await Message.updateMany(
+        { chatId, seen: false, sender: { $ne: userId } },
+        { $set: { seen: true, seenAt: new Date() } }
+    );
+
+    const messages = await Message.find({ chatId }).sort({ createdAt: 1 });
+
+    const otherUserId = chat.users.find((id) => id.toString() !== userId.toString());
+    if (!otherUserId) {
+        res.status(404).json({ message: "other user not found" });
+        return;
+    }
+
+    // socket work
+
+    const unknownUser = {
+        _id: otherUserId,
+        name: "Unknown user name",
+        email: "Unknown user email",
+    };
+
+    try {
+        const { data } = await axios.get<IUser>(
+            `${process.env.USER_SERVICE_URL}/api/v1/user/${otherUserId}`
+        );
+        res.json({ messages, otherUser: data });
+    } catch (error) {
+        console.error(`Error fetching user ${otherUserId}:`, error);
+        res.json({ messages, otherUser: unknownUser });
+    }
 })
