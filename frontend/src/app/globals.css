@@ -1,3 +1,5 @@
+/* `mui` sits before `utilities` so Tailwind classes win over MUI component styles. */
+@layer theme, base, mui, components, utilities;
 @import "tailwindcss";
 
 :root {
