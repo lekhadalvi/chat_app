@@ -105,5 +105,70 @@ export const sendMessage = TryCatch(async(req:AuthenticatedRequest,res) =>{
         return
     }
 
+    if(!text && !imageFile){
+        res.status(400).json({message:"either text or image is required"})
+        return
+    }
+
     const chat = await Chat.findById(chatId)
+    if(!chat){
+        res.status(404).json({message:"chat not found"})
+        return
+    }
+
+   const isUserInChat = chat.users.some(user => user.toString() === senderId.toString())
+   if(!isUserInChat){
+    res.status(403).json({message:"you are not a member of this chat"})
+    return
+   }
+
+   const otherUserId = chat.users.find(userId => userId.toString() !== senderId.toString());
+   if(!otherUserId){
+    res.status(400).json({message:"cannot send message to yourself"})
+    return
+   }
+
+   // socket setup
+
+   
+
+   const messageData: any = {
+    chatId,
+    sender: senderId,
+    seen: false,
+    seenAt: undefined,
+    text: text || "",
+    messageType: imageFile ? "image" : "text",
+   }
+
+   if (imageFile) {
+    messageData.image = {
+        public_id: imageFile.filename,
+        url: imageFile.path,
+    }
+    messageData.messageType = "image"
+    messageData.text = text || " "
+   }
+   else{
+    messageData.messageType = "text"
+    messageData.text = text || " "
+   }
+
+   const message = new Message(messageData)
+ 
+
+   const savedMessage = await message.save()
+
+   const latestMessageText = imageFile ? "📸Image" : text
+   await Chat.findByIdAndUpdate(chatId, {
+    latestMessage: {
+        text: latestMessageText,
+        sender: senderId,
+    },
+    updatedAt: new Date(),
+   },{new:true})
+
+   //emit socket event to the other user
+   
+   res.status(201).json({ message: savedMessage, sender: senderId })
 })
