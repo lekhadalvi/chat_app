@@ -130,6 +130,7 @@ export const mockChats: Chat[] = [
         timestamp: "2h ago",
       },
     ],
+    isBlocked: true,
   },
   {
     id: "chat_5",

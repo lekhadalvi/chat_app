@@ -16,6 +16,8 @@ interface HeartParticle {
 
 export default function LoginPage() {
   const router = useRouter();
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -78,6 +80,10 @@ export default function LoginPage() {
     setError("");
     setSuccess("");
 
+    if (isSignUp && !email.trim()) {
+      setError("WHOA! EMAIL CANNOT BE BLANK!");
+      return;
+    }
     if (!username.trim()) {
       setError("WHOA! USERNAME CANNOT BE BLANK!");
       return;
@@ -91,7 +97,11 @@ export default function LoginPage() {
     // Simulate API request
     setTimeout(() => {
       setLoading(false);
-      setSuccess("HELL YEAH! LOGGED IN SUCCESSFULLY!");
+      setSuccess(
+        isSignUp 
+          ? "HELL YEAH! SIGNED UP SUCCESSFULLY! WELCOME!" 
+          : "HELL YEAH! LOGGED IN SUCCESSFULLY!"
+      );
       
       // Store mock user info in local storage
       localStorage.setItem("zap_user_name", username.trim());
@@ -222,7 +232,7 @@ export default function LoginPage() {
               </svg>
             </div>
             <h2 className="font-lilita text-2xl md:text-3xl tracking-wide uppercase">
-              YO! SIGN IN
+              {isSignUp ? "YO! SIGN UP" : "YO! SIGN IN"}
             </h2>
           </div>
 
@@ -236,6 +246,37 @@ export default function LoginPage() {
             {success && (
               <div className="bg-[#4CD964] border-[3px] border-black p-3 text-black font-lilita text-sm tracking-wide shadow-[3px_3px_0px_#000]">
                 {success}
+              </div>
+            )}
+
+            {/* Email Input Group (Only visible during Sign Up) */}
+            {isSignUp && (
+              <div className="flex flex-col gap-1.5 animate-in fade-in duration-200">
+                <label className="font-lilita text-xs tracking-wider uppercase text-black/70">
+                  EMAIL
+                </label>
+                <div className="relative">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="gamer@zaptalk.com"
+                    className="w-full bg-white text-black font-semibold placeholder-black/40 border-[3px] border-black px-4 py-3 pr-11 rounded-sm shadow-[4px_4px_0px_rgba(0,0,0,1)] focus:outline-none focus:bg-amber-50 focus:translate-x-[1px] focus:translate-y-[1px] focus:shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all"
+                  />
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-black/50 pointer-events-none w-5 h-5">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                      <polyline points="22,6 12,13 2,6" />
+                    </svg>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -303,7 +344,9 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full bg-zap-purple text-white font-lilita text-xl py-3.5 uppercase border-[3.5px] border-black rounded-sm shadow-[5px_5px_0px_rgba(0,0,0,1)] cursor-pointer select-none hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all disabled:bg-purple-900/50 disabled:cursor-not-allowed"
             >
-              {loading ? "LOGGING IN..." : "LOGIN!"}
+              {loading 
+                ? (isSignUp ? "SIGNING UP..." : "LOGGING IN...") 
+                : (isSignUp ? "SIGN UP!" : "LOGIN!")}
             </button>
           </form>
 
@@ -342,12 +385,16 @@ export default function LoginPage() {
           {/* Form Footer Links */}
           <div className="flex flex-col items-center gap-2.5 mt-6 pt-4 border-t-[2.5px] border-black select-none text-center">
             <span className="font-semibold text-xs tracking-wider">
-              New here?{" "}
+              {isSignUp ? "Already a member? " : "New here? "}
               <span
-                onClick={() => alert("Join Squad Pressed!")}
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setError("");
+                  setSuccess("");
+                }}
                 className="text-zap-purple underline font-black cursor-pointer hover:text-purple-800 transition-colors"
               >
-                JOIN THE SQUAD
+                {isSignUp ? "SIGN IN" : "JOIN THE SQUAD"}
               </span>
             </span>
             <span

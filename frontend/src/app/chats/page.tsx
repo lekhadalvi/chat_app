@@ -108,6 +108,20 @@ export default function ChatsPage() {
     );
   };
 
+  const handleToggleBlock = (chatId: string) => {
+    setChats((prevChats) =>
+      prevChats.map((chat) => {
+        if (chat.id === chatId) {
+          return {
+            ...chat,
+            isBlocked: !chat.isBlocked,
+          };
+        }
+        return chat;
+      })
+    );
+  };
+
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-0 md:p-8 bg-transparent">
       <div className="w-full h-screen md:h-[85vh] max-w-[1200px] flex">
@@ -117,6 +131,7 @@ export default function ChatsPage() {
           activeChatId={activeChatId}
           onSelectChat={handleSelectChat}
           onSendMessage={handleSendMessage}
+          onToggleBlock={handleToggleBlock}
         />
       </div>
     </div>

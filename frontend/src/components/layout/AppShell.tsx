@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { SideRail } from "./SideRail";
 import { ChatList } from "./ChatList";
 import { ChatArea } from "./ChatArea";
+import { ProfileView } from "./ProfileView";
 import { Chat, User } from "../../types";
 import { cn } from "../../lib/utils";
 
@@ -11,6 +12,7 @@ interface AppShellProps {
   activeChatId: string;
   onSelectChat: (chatId: string) => void;
   onSendMessage: (chatId: string, content: string) => void;
+  onToggleBlock?: (chatId: string) => void;
 }
 
 export function AppShell({
@@ -19,7 +21,9 @@ export function AppShell({
   activeChatId,
   onSelectChat,
   onSendMessage,
+  onToggleBlock,
 }: AppShellProps) {
+  const [activeTab, setActiveTab] = useState<string>("chats");
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
   const [showDrawer, setShowDrawer] = useState(false);
 
@@ -35,12 +39,45 @@ export function AppShell({
     setMobileView("list");
   };
 
+  // Render Profile View if activeTab is "me"
+  if (activeTab === "me") {
+    return (
+      <div className="relative flex w-full h-full border-[3.5px] border-black bg-white rounded-sm shadow-[8px_8px_0px_rgba(0,0,0,1)] overflow-hidden animate-in fade-in duration-200">
+        {/* Left profile side rail (Desktop only) */}
+        <div className="hidden md:flex">
+          <SideRail 
+            currentUser={currentUser} 
+            activeTab="settings"
+            onTabChange={(tab) => {
+              setActiveTab(tab);
+            }}
+          />
+        </div>
+        {/* Profile Content Pane */}
+        <div className="flex-grow h-full min-w-0">
+          <ProfileView 
+            onBackToChats={() => setActiveTab("chats")}
+            onTabChange={(tab) => {
+              setActiveTab(tab);
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative flex w-full h-full border-[3.5px] border-black bg-white rounded-sm shadow-[8px_8px_0px_rgba(0,0,0,1)] overflow-hidden">
       
       {/* 1. Left profile side rail (Desktop only) */}
       <div className="hidden md:flex">
-        <SideRail currentUser={currentUser} />
+        <SideRail 
+          currentUser={currentUser} 
+          activeTab={activeTab}
+          onTabChange={(tab) => {
+            setActiveTab(tab);
+          }}
+        />
       </div>
 
       {/* 2. Side drawer (Mobile only, toggled via hamburger) */}
@@ -58,7 +95,7 @@ export function AppShell({
               activeTab="chats"
               onTabChange={(tab) => {
                 setShowDrawer(false);
-                alert(`Navigating to tab: ${tab}`);
+                setActiveTab(tab);
               }}
             />
           </div>
@@ -76,6 +113,9 @@ export function AppShell({
           activeChatId={activeChatId}
           onSelectChat={handleSelectChat}
           onToggleSidebar={() => setShowDrawer(true)}
+          onTabChange={(tab) => {
+            setActiveTab(tab);
+          }}
         />
       </div>
 
@@ -90,6 +130,7 @@ export function AppShell({
           currentUser={currentUser}
           onSendMessage={onSendMessage}
           onBack={handleBack}
+          onToggleBlock={onToggleBlock}
         />
       </div>
 

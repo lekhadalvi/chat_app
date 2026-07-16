@@ -32,17 +32,22 @@ export function MessageList({ messages, currentUser }: MessageListProps) {
         </div>
       </div>
 
-      {messages.map((msg) => {
+      {messages.map((msg, idx) => {
         const isMe = msg.senderId === currentUser.id;
         const isImage = msg.content.startsWith("IMAGE:");
         
         const sender = isMe 
           ? currentUser 
           : mockUsers.find((u) => u.id === msg.senderId) || {
-              name: "Kiki",
+              name: "Julianne",
               avatarColor: "var(--color-zap-pink)",
             };
 
+        // Alternate bubble rotations for a hand-drawn crooked effect (stronger for polaroids)
+        const rotationClass = idx % 2 === 0 
+          ? (isImage ? "rotate-[-2.2deg]" : "rotate-[-0.6deg]") 
+          : (isImage ? "rotate-[2.5deg]" : "rotate-[0.8deg]");
+        
         return (
           <div
             key={msg.id}
@@ -59,25 +64,28 @@ export function MessageList({ messages, currentUser }: MessageListProps) {
             <div className="flex flex-col">
               {/* Message Bubble or Image */}
               {isImage ? (
-                <div className="flex flex-col gap-1">
-                  <div className="border-[3px] border-black p-1.5 rounded-sm bg-white shadow-[4px_4px_0px_#000] max-w-[280px]">
+                <div className={`flex flex-col gap-1 ${rotationClass}`}>
+                  <div className="border-[3px] border-black p-3.5 pb-4 rounded-[14px] bg-white shadow-[4px_4px_0px_#000] max-w-[280px]">
                     <img
                       src={msg.content.replace("IMAGE:", "")}
                       alt="shared screengrab"
-                      className="w-full h-auto object-cover border-2 border-black"
+                      className="w-full h-auto object-cover border-[2.5px] border-black rounded-[8px]"
                     />
+                    <div className="mt-2.5 text-xs font-lilita uppercase tracking-wider text-black px-0.5">
+                      LOOK AT THIS FRAME!!
+                    </div>
                   </div>
-                  <span className={`block text-[9px] font-bold text-black/50 ${isMe ? "text-right" : "text-left"}`}>
+                  <span className={`block text-[9px] font-bold text-black/50 mt-1.5 ${isMe ? "text-right" : "text-left"}`}>
                     {msg.timestamp}
                   </span>
                 </div>
               ) : (
-                <div className="flex flex-col">
+                <div className={`flex flex-col ${rotationClass}`}>
                   <div
-                    className={`border-[3px] border-black p-3.5 rounded-sm shadow-[4px_4px_0px_#000] select-text relative ${
+                    className={`border-[3px] border-black p-3.5 rounded-[18px] select-text relative transition-transform ${
                       isMe
-                        ? "bg-[#FF00E0] text-white rounded-tr-none"
-                        : "bg-zap-yellow text-black rounded-tl-none"
+                        ? "bg-zap-yellow text-black shadow-[3.5px_4px_0px_#00D2FF]"
+                        : "bg-white text-black shadow-[3.5px_4px_0px_#000]"
                     }`}
                   >
                     <p className="text-xs md:text-sm font-semibold leading-relaxed break-words font-sans">
@@ -85,7 +93,7 @@ export function MessageList({ messages, currentUser }: MessageListProps) {
                     </p>
                   </div>
                   <span className={`block text-[9px] mt-1 font-bold text-black/50 ${isMe ? "text-right" : "text-left"}`}>
-                    {msg.timestamp}
+                    {isMe ? `SENT - ${msg.timestamp}` : msg.timestamp}
                   </span>
                 </div>
               )}

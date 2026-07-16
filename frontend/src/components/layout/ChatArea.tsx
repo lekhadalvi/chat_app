@@ -9,9 +9,10 @@ interface ChatAreaProps {
   currentUser: User;
   onSendMessage: (chatId: string, content: string) => void;
   onBack?: () => void;
+  onToggleBlock?: (chatId: string) => void;
 }
 
-export function ChatArea({ chat, currentUser, onSendMessage, onBack }: ChatAreaProps) {
+export function ChatArea({ chat, currentUser, onSendMessage, onBack, onToggleBlock }: ChatAreaProps) {
   if (!chat) {
     return (
       <div className="flex-grow flex flex-col items-center justify-center bg-[#f8f7f3] p-8 text-center select-none h-full border-b-[3.5px] border-black md:border-b-0">
@@ -37,7 +38,7 @@ export function ChatArea({ chat, currentUser, onSendMessage, onBack }: ChatAreaP
   return (
     <div className="flex-grow flex flex-col h-full bg-[#f8f7f3] min-w-0">
       {/* Top Convo Header */}
-      <ChatHeader chat={chat} onBack={onBack} />
+      <ChatHeader chat={chat} onBack={onBack} onToggleBlock={onToggleBlock} />
 
       {/* Main Message Listing */}
       <MessageList messages={chat.messages} currentUser={currentUser} />

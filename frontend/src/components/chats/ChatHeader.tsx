@@ -1,18 +1,20 @@
-import React from "react";
+import React, { useState } from "react";
 import { Chat } from "../../types";
 import { Avatar } from "../ui/Avatar";
 
 interface ChatHeaderProps {
   chat: Chat;
   onBack?: () => void; // Support back button on mobile
+  onToggleBlock?: (chatId: string) => void;
 }
 
-export function ChatHeader({ chat, onBack }: ChatHeaderProps) {
+export function ChatHeader({ chat, onBack, onToggleBlock }: ChatHeaderProps) {
+  const [showMenu, setShowMenu] = useState(false);
   const isKiki = chat.name.toLowerCase() === "kiki";
   const subtitle = isKiki ? "ONLINE • TYPING..." : "ONLINE";
 
   return (
-    <div className="flex items-center justify-between p-4 border-b-[3.5px] border-black bg-white select-none">
+    <div className="flex items-center justify-between p-4 border-b-[3.5px] border-black bg-white select-none relative">
       <div className="flex items-center gap-3">
         {/* Mobile Back Button */}
         {onBack && (
@@ -28,9 +30,9 @@ export function ChatHeader({ chat, onBack }: ChatHeaderProps) {
 
         <Avatar
           name={chat.name}
-          color={chat.avatarColor}
+          color={chat.isBlocked ? "#CCCCCC" : chat.avatarColor}
           size="md"
-          isOnline={true}
+          isOnline={!chat.isBlocked}
         />
         
         <div className="flex flex-col justify-center">
@@ -38,7 +40,7 @@ export function ChatHeader({ chat, onBack }: ChatHeaderProps) {
             {chat.name}
           </h3>
           <span className={`font-black text-[10px] tracking-widest ${isKiki ? "text-[#FF00E0]" : "text-black/60"}`}>
-            {subtitle}
+            {chat.isBlocked ? "BLOCKED" : subtitle}
           </span>
         </div>
       </div>
@@ -65,17 +67,33 @@ export function ChatHeader({ chat, onBack }: ChatHeaderProps) {
           </svg>
         </button>
 
-        {/* Options */}
-        <button
-          onClick={() => alert("More options...")}
-          className="w-9 h-9 bg-white border-2 border-black rounded-sm shadow-[2px_2px_0px_#000] flex items-center justify-center cursor-pointer hover:translate-x-[0.5px] hover:translate-y-[0.5px] hover:shadow-[1.5px_1.5px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
-        >
-          <svg viewBox="0 0 24 24" className="w-5 h-5 text-black" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <circle cx="12" cy="5" r="1.5" />
-            <circle cx="12" cy="12" r="1.5" />
-            <circle cx="12" cy="19" r="1.5" />
-          </svg>
-        </button>
+        {/* Options Drodown trigger */}
+        <div className="relative">
+          <button
+            onClick={() => setShowMenu(!showMenu)}
+            className="w-9 h-9 bg-white border-2 border-black rounded-sm shadow-[2px_2px_0px_#000] flex items-center justify-center cursor-pointer hover:translate-x-[0.5px] hover:translate-y-[0.5px] hover:shadow-[1.5px_1.5px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+          >
+            <svg viewBox="0 0 24 24" className="w-5 h-5 text-black" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <circle cx="12" cy="5" r="1.5" />
+              <circle cx="12" cy="12" r="1.5" />
+              <circle cx="12" cy="19" r="1.5" />
+            </svg>
+          </button>
+          
+          {showMenu && (
+            <div className="absolute right-0 top-11 bg-white border-[3px] border-black shadow-[3px_3px_0px_#000] rounded-sm py-1 w-32 z-50 select-none animate-in fade-in duration-100">
+              <button
+                onClick={() => {
+                  setShowMenu(false);
+                  onToggleBlock?.(chat.id);
+                }}
+                className="w-full text-left px-3 py-2 text-xs md:text-sm font-lilita uppercase hover:bg-zap-pink hover:text-white transition-colors"
+              >
+                {chat.isBlocked ? "UNBLOCK" : "BLOCK USER"}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

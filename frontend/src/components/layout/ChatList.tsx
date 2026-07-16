@@ -9,9 +9,10 @@ interface ChatListProps {
   activeChatId: string;
   onSelectChat: (chatId: string) => void;
   onToggleSidebar?: () => void; // Trigger hamburger menu click
+  onTabChange?: (tab: string) => void;
 }
 
-export function ChatList({ chats, activeChatId, onSelectChat, onToggleSidebar }: ChatListProps) {
+export function ChatList({ chats, activeChatId, onSelectChat, onToggleSidebar, onTabChange }: ChatListProps) {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("chats");
 
@@ -84,9 +85,15 @@ export function ChatList({ chats, activeChatId, onSelectChat, onToggleSidebar }:
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search friends..."
-            className="w-full bg-[#EAEAE2] text-black font-semibold placeholder-black/55 border-[3px] border-black px-3.5 py-2.5 rounded-sm shadow-[3.5px_3.5px_0px_#000] focus:outline-none focus:bg-amber-50 focus:translate-x-[0.5px] focus:translate-y-[0.5px] focus:shadow-[2.5px_2.5px_0px_#000] transition-all text-xs"
+            placeholder="SEARCH CHATS..."
+            className="w-full bg-white text-black font-semibold placeholder-black/40 border-[3px] border-black pl-10 pr-4 py-2.5 rounded-[15px] shadow-[3.5px_3.5px_0px_#000] focus:outline-none focus:bg-amber-50 focus:translate-x-[0.5px] focus:translate-y-[0.5px] focus:shadow-[2.5px_2.5px_0px_#000] transition-all text-xs"
           />
+          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-black/60 pointer-events-none w-4 h-4">
+            <svg viewBox="0 0 24 24" className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="3">
+              <circle cx="11" cy="11" r="8" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.3-4.3" />
+            </svg>
+          </div>
         </div>
       </div>
 
@@ -108,21 +115,28 @@ export function ChatList({ chats, activeChatId, onSelectChat, onToggleSidebar }:
         )}
 
         {/* ----------------- FLOATING ACTION BUTTON (MOBILE ONLY) ----------------- */}
+        <div className="md:hidden absolute bottom-[18px] right-[18px] w-12 h-12 bg-zap-yellow border-[3px] border-black rounded-full z-30" />
+        
         <button
           onClick={() => alert("Creating a new chat...")}
-          className="md:hidden absolute bottom-4 right-4 w-12 h-12 bg-[#FF00E0] border-[3px] border-black rounded-lg shadow-[3.5px_3.5px_0px_#000] flex items-center justify-center cursor-pointer hover:translate-x-[0.5px] hover:translate-y-[0.5px] hover:shadow-[3px_3px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all z-35"
+          className="md:hidden absolute bottom-4 right-4 w-12 h-12 bg-[#FF00E0] border-[3px] border-black rounded-[18px] shadow-[3.5px_3.5px_0px_#000] flex items-center justify-center cursor-pointer hover:translate-x-[0.5px] hover:translate-y-[0.5px] hover:shadow-[3px_3px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all z-35"
         >
-          <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="currentColor">
-            <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
+          <svg viewBox="0 0 24 24" className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.5 12h7m-7 4h4m-8 4V6a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H6l-4 4z" />
+            <path strokeLinecap="round" d="M12 7v6m-3-3h6" />
           </svg>
         </button>
       </div>
 
       {/* ----------------- BOTTOM NAVIGATION TABS (MOBILE ONLY) ----------------- */}
       <div className="md:hidden border-t-[3.5px] border-black bg-white grid grid-cols-4 p-2 gap-1.5 select-none">
+        
         {/* Chats Tab */}
         <button
-          onClick={() => setActiveTab("chats")}
+          onClick={() => {
+            setActiveTab("chats");
+            onTabChange?.("chats");
+          }}
           className={cn(
             "py-2 px-1 border-2 border-black rounded-lg flex flex-col items-center justify-center gap-0.5 transition-all text-[9px] font-lilita uppercase",
             activeTab === "chats"
@@ -140,12 +154,12 @@ export function ChatList({ chats, activeChatId, onSelectChat, onToggleSidebar }:
         <button
           onClick={() => {
             setActiveTab("friends");
-            alert("Friends tab clicked!");
+            onTabChange?.("friends");
           }}
           className={cn(
             "py-2 px-1 border-2 border-black rounded-lg flex flex-col items-center justify-center gap-0.5 transition-all text-[9px] font-lilita uppercase",
             activeTab === "friends"
-              ? "bg-[#FF00E0] text-white shadow-[2px_2px_0px_#000]"
+              ? "bg-[#FF00E0] text-white shadow-[2px_2px_0px_#000] transform -translate-x-[1px] -translate-y-[1px]"
               : "bg-white text-black"
           )}
         >
@@ -155,43 +169,45 @@ export function ChatList({ chats, activeChatId, onSelectChat, onToggleSidebar }:
           <span>FRIENDS</span>
         </button>
 
-        {/* Games Tab */}
+        {/* Boards Tab */}
         <button
           onClick={() => {
-            setActiveTab("games");
-            alert("Games tab clicked!");
+            setActiveTab("boards");
+            onTabChange?.("boards");
           }}
           className={cn(
             "py-2 px-1 border-2 border-black rounded-lg flex flex-col items-center justify-center gap-0.5 transition-all text-[9px] font-lilita uppercase",
-            activeTab === "games"
-              ? "bg-[#FF00E0] text-white shadow-[2px_2px_0px_#000]"
+            activeTab === "boards"
+              ? "bg-[#FF00E0] text-white shadow-[2px_2px_0px_#000] transform -translate-x-[1px] -translate-y-[1px]"
               : "bg-white text-black"
           )}
         >
           <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3">
             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15m0 0a3 3 0 11-6 0 3 3 0 016 0zm15 0a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
-          <span>GAMES</span>
+          <span>BOARDS</span>
         </button>
 
-        {/* You Tab */}
+        {/* Me Tab (Yellow active smiley face tag matching screenshot) */}
         <button
           onClick={() => {
-            setActiveTab("you");
-            alert("You tab clicked!");
+            setActiveTab("me");
+            onTabChange?.("me");
           }}
           className={cn(
             "py-2 px-1 border-2 border-black rounded-lg flex flex-col items-center justify-center gap-0.5 transition-all text-[9px] font-lilita uppercase",
-            activeTab === "you"
-              ? "bg-[#FF00E0] text-white shadow-[2px_2px_0px_#000]"
+            activeTab === "me"
+              ? "bg-[#FFEB3B] text-black shadow-[2px_2px_0px_#000] transform -translate-x-[1px] -translate-y-[1px] border-2 border-black"
               : "bg-white text-black"
           )}
         >
-          <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3">
-            <circle cx="12" cy="7" r="4" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 21v-2a4 4 0 014-4h8a4 4 0 014 4v2" />
+          <svg viewBox="0 0 24 24" className="w-4 h-4 text-black" fill="currentColor">
+            <circle cx="12" cy="12" r="10" stroke="black" strokeWidth="2.5" fill="#FFEB3B" />
+            <circle cx="9" cy="10" r="1.5" fill="black" />
+            <circle cx="15" cy="10" r="1.5" fill="black" />
+            <path d="M8 14s1.5 2 4 2 4-2 4-2" stroke="black" strokeWidth="2" fill="none" strokeLinecap="round" />
           </svg>
-          <span>YOU</span>
+          <span>ME</span>
         </button>
       </div>
 

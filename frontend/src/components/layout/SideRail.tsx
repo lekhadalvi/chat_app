@@ -55,7 +55,7 @@ export function SideRail({ currentUser, activeTab = "chats", onTabChange }: Side
   ];
 
   return (
-    <div className="w-[72px] md:w-20 bg-white border-r-[3.5px] border-black flex flex-col items-center justify-between py-6 select-none flex-shrink-0">
+    <div className="w-[72px] md:w-20 h-full bg-white border-r-[3.5px] border-black flex flex-col items-center justify-between py-6 flex-shrink-0">
       
       {/* Top Header Card NC */}
       <div className="flex flex-col items-center gap-1">
@@ -65,7 +65,7 @@ export function SideRail({ currentUser, activeTab = "chats", onTabChange }: Side
       </div>
 
       {/* Middle Tab Actions List */}
-      <div className="flex flex-col gap-4">
+      {/* <div className="flex flex-col gap-4">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
@@ -84,7 +84,7 @@ export function SideRail({ currentUser, activeTab = "chats", onTabChange }: Side
             </button>
           );
         })}
-      </div>
+      </div> */}
 
       {/* Bottom Yellow Plus Add Button */}
       <button
