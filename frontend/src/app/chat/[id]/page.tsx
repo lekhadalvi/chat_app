@@ -7,9 +7,9 @@ import { chats, currentUser, stories } from "@/lib/mock-data";
 export default async function ChatRoomPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
-  const { id } = await params;
+  const { id } = params;
   const chat = chats.find((c) => c.id === id);
   if (!chat) notFound();
 

@@ -24,12 +24,14 @@ export interface AppShellProps {
  * Desktop (lg+): icon rail | list pane | detail pane, all visible at once.
  */
 export function AppShell({ user, sidebar, children, mobilePane = "sidebar" }: AppShellProps) {
-  const paneBase = "min-w-0 flex-col gap-3";
+  const paneBase = "min-w-0 min-h-0 flex-col gap-3";
   // On phones the inactive pane is dropped entirely; both return at lg.
   const paneMobile = "w-full max-w-md mx-auto lg:mx-0 lg:max-w-none";
 
   return (
+
     <div className=" flex h-dvh ap-3 p-3">
+
       <SideRail className="hidden lg:flex" />
 
       <div
