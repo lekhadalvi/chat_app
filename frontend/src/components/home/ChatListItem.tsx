@@ -3,16 +3,24 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import type { Chat } from "@/types";
 
+function tiltClass(id: string): string {
+  const n = id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  return n % 2 === 0 ? "rotate-1" : "-rotate-1";
+}
+
 export interface ChatListItemProps {
   chat: Chat;
 }
 
 export function ChatListItem({ chat }: ChatListItemProps) {
+  const hasUnread = chat.unreadCount > 0;
+  const delay = `${(chat.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % 5) * 75}ms`;
+
   return (
-    <li>
+    <li className="animate-slide-up" style={{ animationDelay: delay }}>
       <Link
         href={`/chat/${chat.id}`}
-        className="flex items-center gap-3 rounded-2xl bg-surface p-3 ink-border ink-shadow transition-transform active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+        className={`flex items-center gap-3 rounded-2xl bg-surface p-3 ink-border ink-shadow transition-all duration-200 hover:scale-[1.02] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none ${hasUnread ? tiltClass(chat.id) : ""}`}
       >
         <span className="relative">
           <Avatar emoji={chat.emoji} tone={chat.tone} imageUrl={chat.imageUrl} alt={chat.title} />

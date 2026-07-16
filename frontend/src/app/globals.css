@@ -26,6 +26,7 @@
 }
 
 body {
+  overflow-x: hidden;
   background: var(--background);
   color: var(--foreground);
   /* Dotted paper backdrop behind the app frame. */
@@ -48,4 +49,20 @@ body {
 
 @utility ink-shadow-lg {
   box-shadow: 6px 6px 0 0 var(--brand-ink);
+}
+
+/* Slide-up entrance for list items */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility animate-slide-up {
+  animation: slide-up 0.35s ease-out both;
 }
