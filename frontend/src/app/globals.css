@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 @theme {
   --font-lilita: var(--font-lilita-one), "Arial Black", sans-serif;
@@ -40,100 +38,98 @@
 }
 
 /* Hand-drawn / slightly tilted / crooked effect */
-@layer utilities {
-  /* Main card crooked effect */
-  .crooked-box {
-    transform: rotate(-0.8deg) scale(1);
-    transition: transform 0.1s ease;
-    box-shadow: 6px 8px 0 rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.02);
-    border: 1px solid rgba(0, 0, 0, 0.04);
-  }
-  
-  .crooked-box:hover {
-    transform: rotate(0.2deg) scale(1.01);
-  }
-  
-  .crooked-box-sm {
-    transform: rotate(-0.4deg);
-    border: 1px solid rgba(0, 0, 0, 0.03);
-  }
-  
-  .tilt-text {
-    transform: rotate(-0.2deg);
-    display: inline-block;
-  }
-  
-  .chat-row {
-    transform: rotate(0.1deg);
-    border-bottom: 1px solid #f0f0f0;
-  }
-  
-  .chat-row:nth-child(odd) {
-    transform: rotate(-0.2deg);
-  }
-  
-  .chat-row:nth-child(3n) {
-    transform: rotate(0.4deg);
-  }
-  
-  .badge-x {
-    font-size: 0.8rem;
-    opacity: 0.5;
-    letter-spacing: 0.5px;
-  }
-  
-  .time-tag {
-    font-size: 0.65rem;
-    color: #8e8e93;
-    letter-spacing: 0.2px;
-  }
-  
-  .title-crooked {
-    transform: rotate(-0.6deg);
-    letter-spacing: -0.5px;
-  }
-  
-  .you-badge {
-    transform: rotate(1.2deg) scale(0.95);
-    background: #f2f2f2;
-    padding: 0 10px;
-    border-radius: 30px;
-    font-weight: 600;
-    font-size: 0.7rem;
-    letter-spacing: 0.3px;
-    display: inline-block;
-  }
-  
-  .list-item-crooked {
-    transform: rotate(0.2deg);
-    transition: all 0.05s;
-  }
-  
-  .list-item-crooked:nth-child(2) {
-    transform: rotate(-0.3deg);
-  }
-  
-  .list-item-crooked:nth-child(4) {
-    transform: rotate(0.5deg);
-  }
-  
-  .list-item-crooked:nth-child(5) {
-    transform: rotate(-0.1deg);
-  }
-  
-  .search-placeholder {
-    color: #8e8e93;
-    font-size: 0.75rem;
-    font-weight: 400;
-    letter-spacing: 0.3px;
-    transform: rotate(-0.1deg);
-  }
-  
-  .bottom-nav {
-    border-top: 1px solid #e5e5ea;
-    background: #f9f9f9;
-  }
+.crooked-box {
+  transform: rotate(-0.8deg) scale(1);
+  transition: transform 0.1s ease;
+  box-shadow: 6px 8px 0 rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }
+
+.crooked-box:hover {
+  transform: rotate(0.2deg) scale(1.01);
+}
+
+.crooked-box-sm {
+  transform: rotate(-0.4deg);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.tilt-text {
+  transform: rotate(-0.2deg);
+  display: inline-block;
+}
+
+.chat-row {
+  transform: rotate(0.1deg);
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.chat-row:nth-child(odd) {
+  transform: rotate(-0.2deg);
+}
+
+.chat-row:nth-child(3n) {
+  transform: rotate(0.4deg);
+}
+
+.badge-x {
+  font-size: 0.8rem;
+  opacity: 0.5;
+  letter-spacing: 0.5px;
+}
+
+.time-tag {
+  font-size: 0.65rem;
+  color: #8e8e93;
+  letter-spacing: 0.2px;
+}
+
+.title-crooked {
+  transform: rotate(-0.6deg);
+  letter-spacing: -0.5px;
+}
+
+.you-badge {
+  transform: rotate(1.2deg) scale(0.95);
+  background: #f2f2f2;
+  padding: 0 10px;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 0.7rem;
+  letter-spacing: 0.3px;
+  display: inline-block;
+}
+
+.list-item-crooked {
+  transform: rotate(0.2deg);
+  transition: all 0.05s;
+}
+
+.list-item-crooked:nth-child(2) {
+  transform: rotate(-0.3deg);
+}
+
+.list-item-crooked:nth-child(4) {
+  transform: rotate(0.5deg);
+}
+
+.list-item-crooked:nth-child(5) {
+  transform: rotate(-0.1deg);
+}
+
+.search-placeholder {
+  color: #8e8e93;
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.3px;
+  transform: rotate(-0.1deg);
+}
+
+.bottom-nav {
+  border-top: 1px solid #e5e5ea;
+  background: #f9f9f9;
+}
+
 body {
   background-color: #f8f7f3;
   background-image: radial-gradient(#cdbb8d 1.5px, transparent 1.5px);
