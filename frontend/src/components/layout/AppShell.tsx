@@ -29,7 +29,9 @@ export function AppShell({ user, sidebar, children, mobilePane = "sidebar" }: Ap
   const paneMobile = "w-full max-w-md mx-auto lg:mx-0 lg:max-w-none";
 
   return (
-    <div className="flex h-dvh gap-3 p-3">
+
+    <div className=" flex h-dvh ap-3 p-3">
+
       <SideRail className="hidden lg:flex" />
 
       <div
