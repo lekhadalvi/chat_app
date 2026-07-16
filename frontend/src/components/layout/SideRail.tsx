@@ -7,9 +7,10 @@ interface SideRailProps {
   currentUser: User;
   activeTab?: string;
   onTabChange?: (tab: string) => void;
+  onAddFriendClick?: () => void;
 }
 
-export function SideRail({ currentUser, activeTab = "chats", onTabChange }: SideRailProps) {
+export function SideRail({ currentUser, activeTab = "chats", onTabChange, onAddFriendClick }: SideRailProps) {
   const tabs = [
     {
       id: "chats",
@@ -57,9 +58,12 @@ export function SideRail({ currentUser, activeTab = "chats", onTabChange }: Side
   return (
     <div className="w-[72px] md:w-20 h-full bg-white border-r-[3.5px] border-black flex flex-col items-center justify-between py-6 flex-shrink-0">
       
-      {/* Top Header Card NC */}
-      <div className="flex flex-col items-center gap-1">
-        <div className="w-12 h-12 bg-white border-[3px] border-black rounded-sm shadow-[3.5px_3.5px_0px_#000] flex items-center justify-center font-lilita text-lg uppercase">
+      {/* Top Header Card NC (Routes to Profile) */}
+      <div 
+        onClick={() => onTabChange?.("me")}
+        className="flex flex-col items-center gap-1 cursor-pointer transition-transform active:scale-95"
+      >
+        <div className="w-12 h-12 bg-white border-[3px] border-black rounded-sm shadow-[3.5px_3.5px_0px_#000] flex items-center justify-center font-lilita text-lg uppercase hover:bg-neutral-50">
           NC
         </div>
       </div>
@@ -86,9 +90,9 @@ export function SideRail({ currentUser, activeTab = "chats", onTabChange }: Side
         })}
       </div> */}
 
-      {/* Bottom Yellow Plus Add Button */}
+      {/* Bottom Yellow Plus Add Button (Triggers invite modal) */}
       <button
-        onClick={() => alert("Create a new squad or channel!")}
+        onClick={onAddFriendClick}
         className="w-11 h-11 bg-zap-yellow text-black border-[3px] border-black rounded-full shadow-[2.5px_2.5px_0px_#000] flex items-center justify-center font-lilita text-xl font-bold cursor-pointer hover:translate-x-[0.5px] hover:translate-y-[0.5px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
         title="Add Chat"
       >

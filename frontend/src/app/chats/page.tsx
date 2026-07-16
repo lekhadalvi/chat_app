@@ -122,6 +122,22 @@ export default function ChatsPage() {
     );
   };
 
+  const handleCreateChat = (name: string) => {
+    const cleanName = name.replace("_", " ");
+    const newChatId = `chat_${Date.now()}`;
+    const newChat: Chat = {
+      id: newChatId,
+      name: cleanName,
+      avatarColor: name === "FREY" ? "var(--color-zap-purple)" : "var(--color-zap-pink)",
+      lastMessage: "No messages yet. Spill the tea...",
+      timestamp: "Now",
+      unreadCount: 0,
+      messages: [],
+    };
+    setChats((prev) => [newChat, ...prev]);
+    setActiveChatId(newChatId);
+  };
+
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-0 md:p-8 bg-transparent">
       <div className="w-full h-screen md:h-[85vh] max-w-[1200px] flex">
@@ -132,6 +148,7 @@ export default function ChatsPage() {
           onSelectChat={handleSelectChat}
           onSendMessage={handleSendMessage}
           onToggleBlock={handleToggleBlock}
+          onCreateChat={handleCreateChat}
         />
       </div>
     </div>

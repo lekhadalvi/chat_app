@@ -10,9 +10,10 @@ interface ChatListProps {
   onSelectChat: (chatId: string) => void;
   onToggleSidebar?: () => void; // Trigger hamburger menu click
   onTabChange?: (tab: string) => void;
+  onCreateChatClick?: () => void;
 }
 
-export function ChatList({ chats, activeChatId, onSelectChat, onToggleSidebar, onTabChange }: ChatListProps) {
+export function ChatList({ chats, activeChatId, onSelectChat, onToggleSidebar, onTabChange, onCreateChatClick }: ChatListProps) {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("chats");
 
@@ -26,7 +27,7 @@ export function ChatList({ chats, activeChatId, onSelectChat, onToggleSidebar, o
       {/* ----------------- MOBILE HEADER ----------------- */}
       <div className="md:hidden bg-zap-yellow p-4 border-b-[3.5px] border-black flex items-center justify-between">
         <div className="flex items-center gap-3">
-          {/* Hamburger Menu */}
+          
           <button 
             onClick={onToggleSidebar}
             className="text-black focus:outline-none w-8 h-8 flex items-center justify-center border-2 border-black rounded-sm shadow-[1.5px_1.5px_0px_#000] bg-white active:translate-y-[1px]"
@@ -35,18 +36,18 @@ export function ChatList({ chats, activeChatId, onSelectChat, onToggleSidebar, o
               <path strokeLinecap="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          {/* Slanted Title */}
+         
           <h2 className="font-lilita text-xl italic uppercase tracking-wider transform -skew-x-12 select-none" style={{ WebkitTextStroke: "1px black" }}>
-            ZAP! CHAT
+            ZAP! CHAT YO 🤘 Let's Chat
           </h2>
         </div>
         {/* Top-Right Avatar */}
-        <Avatar name="GamerTag 99" color="var(--color-zap-purple)" size="sm" isOnline={true} />
+        {/* <Avatar name="GamerTag 99" color="var(--color-zap-purple)" size="sm" isOnline={true} /> */}
       </div>
 
       {/* ----------------- STORIES BAR (MOBILE ONLY) ----------------- */}
-      <div className="md:hidden flex gap-4 p-4 overflow-x-auto border-b-[3.5px] border-black bg-[#f8f7f3]">
-        {/* You Story card */}
+      {/* <div className="md:hidden flex gap-4 p-4 overflow-x-auto border-b-[3.5px] border-black bg-[#f8f7f3]">
+       
         <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
           <div className="w-12 h-12 bg-white border-[3px] border-black rounded-[10px] shadow-[2.5px_2.5px_0px_#000] flex items-center justify-center font-lilita text-lg">
             +
@@ -54,33 +55,30 @@ export function ChatList({ chats, activeChatId, onSelectChat, onToggleSidebar, o
           <span className="font-lilita text-[10px] uppercase text-black/60">YOU</span>
         </div>
 
-        {/* Kiki Story card */}
         <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
           <Avatar name="Kiki" color="var(--color-zap-pink)" size="md" shape="square" borderColor="#FF00E0" className="w-12 h-12" />
           <span className="font-lilita text-[10px] uppercase text-black/70">Kiki</span>
         </div>
 
-        {/* Jax Story card */}
         <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
           <Avatar name="Jax" color="var(--color-zap-yellow)" size="md" shape="square" borderColor="var(--color-zap-yellow)" className="w-12 h-12" />
           <span className="font-lilita text-[10px] uppercase text-black/70">Jax</span>
         </div>
 
-        {/* Mia Story card */}
         <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
           <Avatar name="Mia" color="var(--color-zap-cyan)" size="md" shape="square" borderColor="var(--color-zap-cyan)" className="w-12 h-12" />
           <span className="font-lilita text-[10px] uppercase text-black/70">Mia</span>
         </div>
-      </div>
+      </div> */}
 
       {/* ----------------- DESKTOP TITLE ----------------- */}
       <div className="hidden md:block p-4 pb-0">
-        <h2 className="font-lilita text-2xl uppercase tracking-wider">CHATS</h2>
+        <h2 className="font-lilita text-2xl uppercase tracking-wider">ZAP! CHAT YO 🤘 Let's Chat</h2>
       </div>
 
       {/* ----------------- SEARCH BAR ----------------- */}
-      <div className="p-4 border-b-[3.5px] border-black bg-white">
-        <div className="relative">
+      <div className="p-4 border-b-[3.5px] border-black bg-white flex items-center gap-3">
+        <div className="relative flex-grow">
           <input
             type="text"
             value={search}
@@ -95,6 +93,17 @@ export function ChatList({ chats, activeChatId, onSelectChat, onToggleSidebar, o
             </svg>
           </div>
         </div>
+
+        {/* Plus Button to Create New Chat (Desktop only) */}
+        <button
+          onClick={onCreateChatClick}
+          className="hidden md:flex w-9 h-9 bg-zap-pink border-[3px] border-black rounded-[10px] shadow-[2.5px_2.5px_0px_#000] items-center justify-center cursor-pointer hover:translate-x-[0.5px] hover:translate-y-[0.5px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex-shrink-0"
+          title="Create New Chat"
+        >
+          <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="3.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+        </button>
       </div>
 
       {/* ----------------- CONVERSATIONS SCROLL feed ----------------- */}
@@ -129,9 +138,8 @@ export function ChatList({ chats, activeChatId, onSelectChat, onToggleSidebar, o
       </div>
 
       {/* ----------------- BOTTOM NAVIGATION TABS (MOBILE ONLY) ----------------- */}
-      <div className="md:hidden border-t-[3.5px] border-black bg-white grid grid-cols-4 p-2 gap-1.5 select-none">
+      {/* <div className="md:hidden border-t-[3.5px] border-black bg-white grid grid-cols-4 p-2 gap-1.5 select-none">
         
-        {/* Chats Tab */}
         <button
           onClick={() => {
             setActiveTab("chats");
@@ -150,7 +158,6 @@ export function ChatList({ chats, activeChatId, onSelectChat, onToggleSidebar, o
           <span>CHATS</span>
         </button>
 
-        {/* Friends Tab */}
         <button
           onClick={() => {
             setActiveTab("friends");
@@ -169,7 +176,6 @@ export function ChatList({ chats, activeChatId, onSelectChat, onToggleSidebar, o
           <span>FRIENDS</span>
         </button>
 
-        {/* Boards Tab */}
         <button
           onClick={() => {
             setActiveTab("boards");
@@ -188,7 +194,7 @@ export function ChatList({ chats, activeChatId, onSelectChat, onToggleSidebar, o
           <span>BOARDS</span>
         </button>
 
-        {/* Me Tab (Yellow active smiley face tag matching screenshot) */}
+      
         <button
           onClick={() => {
             setActiveTab("me");
@@ -209,7 +215,7 @@ export function ChatList({ chats, activeChatId, onSelectChat, onToggleSidebar, o
           </svg>
           <span>ME</span>
         </button>
-      </div>
+      </div> */}
 
     </div>
   );
