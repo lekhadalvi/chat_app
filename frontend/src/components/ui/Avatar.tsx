@@ -6,6 +6,8 @@ interface AvatarProps {
   color?: string;
   size?: "sm" | "md" | "lg";
   isOnline?: boolean;
+  shape?: "circle" | "square";
+  borderColor?: string;
   className?: string;
 }
 
@@ -14,6 +16,8 @@ export function Avatar({
   color = "var(--color-zap-purple)",
   size = "md",
   isOnline = false,
+  shape = "circle",
+  borderColor,
   className,
 }: AvatarProps) {
   const initials = name
@@ -35,20 +39,28 @@ export function Avatar({
     lg: "w-4.5 h-4.5 border-2.5",
   };
 
+  const borderStyle = borderColor
+    ? { borderColor }
+    : {};
+
   return (
     <div className="relative flex-shrink-0 select-none">
       <div
         className={cn(
-          "font-lilita flex items-center justify-center rounded-sm text-black border-black",
+          "font-lilita flex items-center justify-center text-black border-black",
+          shape === "circle" ? "rounded-full" : "rounded-[10px]",
           sizeClasses[size],
           className
         )}
-        style={{ backgroundColor: color }}
+        style={{ 
+          backgroundColor: color,
+          ...borderStyle
+        }}
       >
         {initials}
       </div>
 
-      {isOnline && (
+      {isOnline && shape === "circle" && (
         <span
           className={cn(
             "absolute -bottom-0.5 -right-0.5 rounded-full bg-[#4CD964] border-black",

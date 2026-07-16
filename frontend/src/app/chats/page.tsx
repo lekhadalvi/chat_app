@@ -109,8 +109,8 @@ export default function ChatsPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 bg-transparent">
-      <div className="w-full max-w-[1200px] h-[85vh] flex">
+    <div className="min-h-screen w-full flex items-center justify-center p-0 md:p-8 bg-transparent">
+      <div className="w-full h-screen md:h-[85vh] max-w-[1200px] flex">
         <AppShell
           currentUser={user}
           chats={chats}

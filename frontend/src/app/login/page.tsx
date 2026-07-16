@@ -171,7 +171,7 @@ export default function LoginPage() {
       </div>
 
       {/* Header Title Section */}
-      <div className="flex flex-col items-center mt-10 md:mt-14 mb-4 select-none relative z-10">
+      <div className="flex flex-col items-center  mb-4 select-none relative z-10">
         <div className="relative flex flex-col md:flex-row items-center gap-2 md:gap-4">
           <div className="relative">
             {/* Back Magenta Slanted Title */}
@@ -308,16 +308,16 @@ export default function LoginPage() {
           </form>
 
           {/* Divider */}
-          <div className="flex items-center gap-3 my-6 select-none">
+          {/* <div className="flex items-center gap-3 my-6 select-none">
             <div className="flex-grow h-[2px] bg-black"></div>
             <span className="font-lilita text-[10px] md:text-xs tracking-wider uppercase text-black/75">
               OR USE THESE
             </span>
             <div className="flex-grow h-[2px] bg-black"></div>
-          </div>
+          </div> */}
 
           {/* Social login buttons */}
-          <div className="grid grid-cols-2 gap-3.5 select-none">
+          {/* <div className="grid grid-cols-2 gap-3.5 select-none">
             <button
               onClick={() => alert("Google Login Pressed!")}
               className="bg-zap-cyan text-black font-lilita text-sm py-3 px-3.5 border-[3px] border-black rounded-sm shadow-[4px_4px_0px_rgba(0,0,0,1)] cursor-pointer flex items-center justify-center gap-2 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
@@ -337,7 +337,7 @@ export default function LoginPage() {
               </svg>
               <span>DISCORD</span>
             </button>
-          </div>
+          </div> */}
 
           {/* Form Footer Links */}
           <div className="flex flex-col items-center gap-2.5 mt-6 pt-4 border-t-[2.5px] border-black select-none text-center">
@@ -361,7 +361,7 @@ export default function LoginPage() {
       </div>
 
       {/* Footer Navigation Buttons */}
-      <div className="flex items-center gap-5 my-6 select-none relative z-25">
+      {/* <div className="flex items-center gap-5 my-6 select-none relative z-25">
         <button
           onClick={() => alert("Chat Clicked!")}
           className="w-14 h-14 bg-zap-yellow border-[3.5px] border-black rounded-sm shadow-[4px_4px_0px_rgba(0,0,0,1)] cursor-pointer flex items-center justify-center hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
@@ -388,7 +388,7 @@ export default function LoginPage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 21l-.813-5.096L3 15l5.188-.904L9 9l.813 5.096L15 15l-5.187.904ZM19.071 4.929l-.357 2.228-.358-2.228-2.227-.358 2.227-.357.358-2.228.357 2.228 2.228.357-2.228.358ZM19.071 19.071l-.357 2.228-.358-2.228-2.227-.358 2.227-.357.358-2.228.357 2.228 2.228.357-2.228.358Z" />
           </svg>
         </button>
-      </div>
+      </div> */}
     </div>
   );
 }
