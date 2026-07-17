@@ -1,37 +1,76 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Avatar } from "../ui/Avatar";
-import { cn } from "../../lib/utils";
+import { useForm } from "react-hook-form";
+import { userService } from "../../services/userService";
+import { useAuth } from "../../hooks/useAuth";
+import { useChat } from "../../hooks/useChat";
 
-interface ProfileViewProps {
-  onBackToChats?: () => void;
-  onTabChange?: (tab: string) => void;
+interface ProfileFormInput {
+  username: string;
 }
 
-export function ProfileView({ onBackToChats, onTabChange }: ProfileViewProps) {
-  const crew = [
-    { name: "SKATE_RAT", color: "var(--color-zap-yellow)", avatar: "🐀" },
-    { name: "PIXEL_PUNK", color: "var(--color-zap-pink)", avatar: "🎸" },
-    { name: "GLITCH_CAT", color: "var(--color-zap-cyan)", avatar: "🐱" },
-  ];
+export function ProfileView() {
+  const { user: currentUser, updateName: onUpdateName } = useAuth();
+  const { setActiveTab } = useChat();
 
-  const galleryItems = [
-    {
-      title: "TOKYO NEON",
-      img: "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f?w=400&auto=format&fit=crop",
-    },
-    {
-      title: "CRYSTAL SHARDS",
-      img: "https://images.unsplash.com/photo-1599707367072-cd6ada2bc375?w=400&auto=format&fit=crop",
-    },
-    {
-      title: "WINGED SHOE",
-      img: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&auto=format&fit=crop",
-    },
-    {
-      title: "NEBULA DRIFT",
-      img: "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?w=400&auto=format&fit=crop",
-    },
-  ];
+  const onBackToChats = () => setActiveTab("chats");
+  const onTabChange = (tab: string) => setActiveTab(tab);
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [crew, setCrew] = useState<{ name: string; color: string; avatar: string }[]>([]);
+
+  const { register, handleSubmit, formState: { errors: formErrors }, setValue } = useForm<ProfileFormInput>({
+    defaultValues: {
+      username: currentUser.name
+    }
+  });
+
+  const charCodeSum = currentUser.name
+    ? currentUser.name.split("").reduce((acc: number, c: string) => acc + c.charCodeAt(0), 0)
+    : 0;
+  const dynamicLvl = (charCodeSum % 80) + 10;
+  const dynamicStickers = (charCodeSum * 3) % 900 + 100;
+  const dynamicStreaks = (currentUser.name.length * 3) || 12;
+  const dynamicArt = (currentUser.name.length + 5) || 7;
+
+  useEffect(() => {
+    setValue("username", currentUser.name);
+  }, [currentUser.name, setValue]);
+
+  useEffect(() => {
+    const fetchCrew = async () => {
+      try {
+        const token = localStorage.getItem("zap_token");
+        if (!token) return;
+        const data = await userService.fetchAllUsers(token);
+        // Filter out current user from crew list
+        const filtered = data.filter((u: any) => u._id !== currentUser.id);
+        
+        const avatars = ["🐀", "🎸", "🐱", "🐶", "🦊", "🦁", "🐨", "🐸"];
+        const colors = [
+          "var(--color-zap-yellow)",
+          "var(--color-zap-pink)",
+          "var(--color-zap-cyan)",
+          "var(--color-zap-purple)"
+        ];
+
+        const mappedCrew = filtered.slice(0, 4).map((u: any) => {
+          const charSum = u.name.split("").reduce((acc: number, c: string) => acc + c.charCodeAt(0), 0);
+          return {
+            name: u.name,
+            color: colors[charSum % colors.length],
+            avatar: avatars[charSum % avatars.length]
+          };
+        });
+        setCrew(mappedCrew);
+      } catch (err) {
+        console.error("Failed to fetch crew", err);
+      }
+    };
+    fetchCrew();
+  }, [currentUser.id]);
+
+
 
   return (
     <div className="w-full h-full bg-[#f8f7f3] flex flex-col select-none relative min-h-0">
@@ -50,7 +89,7 @@ export function ProfileView({ onBackToChats, onTabChange }: ProfileViewProps) {
           </button>
           {/* Title */}
           <h2 className="font-lilita text-xl italic uppercase tracking-wider transform -skew-x-12" style={{ WebkitTextStroke: "1px black" }}>
-           ZAP! CHAT YO 🤘 Let's Chat
+           ZAP! CHAT YO 🤘 Let&apos;s Chat
           </h2>
         </div>
         {/* User avatar tag */}
@@ -67,109 +106,133 @@ export function ProfileView({ onBackToChats, onTabChange }: ProfileViewProps) {
           </svg>
         </div>
 
-        {/* 2-Column Responsive Layout (Mobile: Vertical Stack, Desktop: Side-by-Side) */}
-        <div className="w-full max-w-4xl flex flex-col md:flex-row gap-8 items-start relative z-20 mt-4 md:mt-2">
+        {/* Centered Profile Layout */}
+        <div className="w-full max-w-md mx-auto flex flex-col items-center gap-6 relative z-20 mt-4 md:mt-2">
           
-          {/* Left Column (Desktop) / Bottom Section (Mobile) -> GALLERY */}
-          <div className="w-full md:w-1/2 order-2 md:order-2 select-none">
-            <h3 className="font-lilita text-sm md:text-md uppercase tracking-wider mb-4 text-center md:text-left">
-              GALLERY
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              {galleryItems.map((item, idx) => {
-                // Alternate rotation angles for polaroid grids
-                const rot = idx % 2 === 0 ? "rotate-[-2deg]" : "rotate-[2.5deg]";
-                return (
-                  <div 
-                    key={idx} 
-                    className={cn(
-                      "bg-white border-[3px] border-black p-2 pb-3.5 shadow-[4.5px_4.5px_0px_#000] transition-transform hover:scale-105",
-                      rot
-                    )}
-                  >
-                    <img 
-                      src={item.img} 
-                      alt={item.title}
-                      className="w-full aspect-square object-cover border-2 border-black rounded-sm"
-                    />
-                    <div className="mt-2 text-[8px] font-lilita text-black/70 tracking-widest text-center">
-                      {item.title}
-                    </div>
-                  </div>
-                );
-              })}
+          {/* Desktop Back button to return to chats (Visible ONLY on desktop) */}
+          <div className="hidden md:flex w-full justify-start">
+            <button
+              onClick={onBackToChats}
+              className="px-4 py-2 bg-white text-black border-[3px] border-black rounded-sm shadow-[3px_3px_0px_#000] font-lilita text-xs uppercase cursor-pointer hover:bg-neutral-50 active:translate-y-[1px] active:shadow-none flex items-center gap-1.5 transition-all"
+            >
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              <span>BACK TO CHATS</span>
+            </button>
+          </div>
+
+          {/* Large Profile Avatar Frame with Level tag */}
+          <div className="relative mt-2">
+            <div 
+              className="w-32 h-32 border-[3.5px] border-black rounded-full shadow-[5px_5.5px_0px_#000] flex items-center justify-center font-lilita text-6xl uppercase text-black select-none"
+              style={{ 
+                backgroundColor: [
+                  "var(--color-zap-purple)",
+                  "var(--color-zap-cyan)",
+                  "var(--color-zap-yellow)",
+                  "var(--color-zap-pink)"
+                ][charCodeSum % 4]
+              }}
+            >
+              {currentUser.email ? currentUser.email.charAt(0).toUpperCase() : (currentUser.name ? currentUser.name.charAt(0).toUpperCase() : "G")}
+            </div>
+            {/* Level pink slanted badge */}
+            <div className="absolute -bottom-1 right-2 bg-[#FF00E0] text-white font-lilita text-[10px] py-1 px-2 border-2 border-black rounded-md shadow-[1.5px_1.5px_0px_#000] uppercase transform -rotate-12">
+              LVL {dynamicLvl}
             </div>
           </div>
 
-          {/* Right Column (Desktop) / Top Section (Mobile) -> BIO & STATS & CREW */}
-          <div className="w-full md:w-1/2 order-1 md:order-1 flex flex-col items-center md:items-start gap-6">
-            
-            {/* Desktop Back button to return to chats (Visible ONLY on desktop) */}
-            <div className="hidden md:flex w-full justify-start">
-              <button
-                onClick={onBackToChats}
-                className="px-4 py-2 bg-white text-black border-[3px] border-black rounded-sm shadow-[3px_3px_0px_#000] font-lilita text-xs uppercase cursor-pointer hover:bg-neutral-50 active:translate-y-[1px] active:shadow-none flex items-center gap-1.5 transition-all"
-              >
-                <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                <span>BACK TO CHATS</span>
-              </button>
-            </div>
-
-            {/* Avatar and Bio Header (Side-by-side on desktop, vertical stack on mobile) */}
-            <div className="flex flex-col md:flex-row items-center md:items-start gap-5 md:gap-7 w-full justify-center md:justify-start">
-              {/* Large Profile Avatar Frame with Level tag */}
-              <div className="relative mt-2 self-center md:self-start">
-                <div className="w-32 h-32 bg-white border-[3.5px] border-black rounded-full shadow-[5px_5.5px_0px_#000] p-1 overflow-hidden relative">
-                  {/* Custom anime boy avatar with beanie and blue hair SVG */}
-                  <svg viewBox="0 0 100 100" className="w-full h-full bg-[#E0F7FA] rounded-full overflow-hidden">
-                    <circle cx="50" cy="50" r="50" fill="#B2EBF2" />
-                    <path d="M20 40 C 25 30, 35 25, 50 25 C 65 25, 75 30, 80 40 C 85 50, 80 70, 75 80 C 70 85, 30 85, 25 80 C 20 70, 15 50, 20 40 Z" fill="#00ACC1" stroke="black" strokeWidth="2.5" />
-                    <circle cx="50" cy="55" r="22" fill="#FFE0B2" stroke="black" strokeWidth="2.5" />
-                    <circle cx="43" cy="53" r="3" fill="black" />
-                    <circle cx="57" cy="53" r="3" fill="black" />
-                    <path d="M47 62 Q 50 65, 53 62" stroke="black" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-                    <path d="M25 38 C 30 20, 70 20, 75 38 C 75 38, 70 42, 50 42 C 30 42, 25 38, 25 38 Z" fill="#FFEB3B" stroke="black" strokeWidth="2.5" />
-                    <circle cx="50" cy="20" r="6" fill="#FFEB3B" stroke="black" strokeWidth="2.5" />
-                    <path d="M43 75 L 43 85 L 57 85 L 57 75 Z" fill="#FFE0B2" stroke="black" strokeWidth="2" />
-                    <path d="M30 85 L 70 85 L 65 100 L 35 100 Z" fill="#1E88E5" stroke="black" strokeWidth="2.5" />
-                  </svg>
-                </div>
-                {/* Level pink slanted badge */}
-                <div className="absolute -bottom-1 right-2 bg-[#FF00E0] text-white font-lilita text-[10px] py-1 px-2 border-2 border-black rounded-md shadow-[1.5px_1.5px_0px_#000] uppercase transform -rotate-12">
-                  LVL 42
-                </div>
-              </div>
-
               {/* Display name and status */}
-              <div className="text-center md:text-left select-text flex flex-col items-center md:items-start justify-center pt-2">
-                <h2 className="font-lilita text-2xl uppercase tracking-wide">
-                  @CHAOZ_LORD
-                </h2>
-                {/* Crooked Status banner */}
-                <div className="inline-block mt-3 bg-zap-yellow text-black font-lilita text-xs py-2 px-5 border-[3px] border-black rounded-sm shadow-[3px_3.5px_0px_#000] transform -rotate-[3deg]">
-                  Online & Hyped! ⚡
-                </div>
+              <div className="text-center md:text-left select-text flex flex-col items-center md:items-start justify-center pt-2 w-full max-w-xs">
+                {isEditing ? (
+                  <form
+                    onSubmit={handleSubmit(async (data) => {
+                      const trimmedName = data.username.trim();
+                      if (!trimmedName || trimmedName === currentUser.name) {
+                        setIsEditing(false);
+                        return;
+                      }
+                      setLoading(true);
+                      try {
+                        if (onUpdateName) {
+                          await onUpdateName(trimmedName);
+                        }
+                        setIsEditing(false);
+                      } catch (err) {
+                        console.error(err);
+                      } finally {
+                        setLoading(false);
+                      }
+                    })}
+                    className="flex flex-col gap-2 w-full mt-2"
+                  >
+                    <input
+                      type="text"
+                      {...register("username", { required: true })}
+                      className="bg-white text-black font-lilita text-lg uppercase border-[3px] border-black px-3 py-1.5 rounded-sm shadow-[3px_3px_0px_rgba(0,0,0,1)] focus:outline-none"
+                    />
+                    {formErrors.username && <span className="text-[10px] text-[#FF5E5E] font-lilita uppercase select-none">WHOA! USERNAME CANNOT BE BLANK!</span>}
+                    <div className="flex gap-2">
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="px-3 py-1.5 bg-zap-purple text-white border-2 border-black rounded-sm shadow-[2px_2px_0px_rgba(0,0,0,1)] font-lilita text-xs uppercase cursor-pointer hover:bg-purple-800 disabled:opacity-50"
+                      >
+                        {loading ? "SAVING..." : "SAVE"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsEditing(false);
+                          setValue("username", currentUser.name);
+                        }}
+                        className="px-3 py-1.5 bg-white text-black border-2 border-black rounded-sm shadow-[2px_2px_0px_rgba(0,0,0,1)] font-lilita text-xs uppercase cursor-pointer hover:bg-neutral-50"
+                      >
+                        CANCEL
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="flex flex-col items-center md:items-start">
+                    <div className="flex items-center gap-2.5">
+                      <h2 className="font-lilita text-2xl uppercase tracking-wide">
+                        @{currentUser.name || "GAMER"}
+                      </h2>
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="w-7 h-7 bg-zap-cyan border-2 border-black rounded-sm shadow-[1.5px_1.5px_0px_rgba(0,0,0,1)] flex items-center justify-center cursor-pointer hover:translate-x-[0.5px] hover:translate-y-[0.5px] hover:shadow-[1px_1px_0px_rgba(0,0,0,1)] active:translate-x-[1.5px] active:translate-y-[1.5px] active:shadow-none transition-all"
+                        title="Edit Username"
+                      >
+                        <svg viewBox="0 0 24 24" className="w-4 h-4 text-black" fill="none" stroke="currentColor" strokeWidth="3">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </button>
+                    </div>
+                    {/* Crooked Status banner */}
+                    <div className="inline-block mt-3 bg-zap-yellow text-black font-lilita text-xs py-2 px-5 border-[3px] border-black rounded-sm shadow-[3px_3.5px_0px_#000] transform -rotate-[3deg]">
+                      Online & Hyped! ⚡
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
 
             {/* 3 Quick Stats columns */}
             <div className="w-full max-w-sm grid grid-cols-3 gap-3.5">
               {/* Stickers */}
               <div className="bg-white border-[3px] border-black p-2.5 rounded-sm shadow-[3.5px_3.5px_0px_#000] flex flex-col items-center justify-center">
                 <span className="font-lilita text-[8px] md:text-[9px] uppercase tracking-wider text-black/50">STICKERS</span>
-                <span className="font-lilita text-lg md:text-xl text-[#FF00E0] mt-0.5">842</span>
+                <span className="font-lilita text-lg md:text-xl text-[#FF00E0] mt-0.5">{dynamicStickers}</span>
               </div>
               {/* Streaks */}
               <div className="bg-white border-[3px] border-black p-2.5 rounded-sm shadow-[3.5px_3.5px_0px_#000] flex flex-col items-center justify-center">
                 <span className="font-lilita text-[8px] md:text-[9px] uppercase tracking-wider text-black/50">STREAKS</span>
-                <span className="font-lilita text-lg md:text-xl text-[#8E790B] mt-0.5">15</span>
+                <span className="font-lilita text-lg md:text-xl text-[#8E790B] mt-0.5">{dynamicStreaks}</span>
               </div>
               {/* Art */}
               <div className="bg-white border-[3px] border-black p-2.5 rounded-sm shadow-[3.5px_3.5px_0px_#000] flex flex-col items-center justify-center">
                 <span className="font-lilita text-[8px] md:text-[9px] uppercase tracking-wider text-black/50">ART</span>
-                <span className="font-lilita text-lg md:text-xl text-zap-cyan mt-0.5">29</span>
+                <span className="font-lilita text-lg md:text-xl text-zap-cyan mt-0.5">{dynamicArt}</span>
               </div>
             </div>
 
@@ -207,55 +270,5 @@ export function ProfileView({ onBackToChats, onTabChange }: ProfileViewProps) {
         </div>
 
       </div>
-
-      {/* ----------------- BOTTOM TABS (MOBILE ONLY) ----------------- */}
-      {/* <div className="md:hidden border-t-[3.5px] border-black bg-white grid grid-cols-4 p-2 gap-1.5 flex-shrink-0 z-10">
-        
-        <button
-          onClick={onBackToChats}
-          className="py-2 px-1 border-2 border-black bg-white text-black rounded-lg flex flex-col items-center justify-center gap-0.5 text-[9px] font-lilita uppercase"
-        >
-          <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 0 1-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8Z" />
-          </svg>
-          <span>CHATS</span>
-        </button>
-
-        <button
-          onClick={() => onTabChange?.("friends")}
-          className="py-2 px-1 border-2 border-black bg-white text-black rounded-lg flex flex-col items-center justify-center gap-0.5 text-[9px] font-lilita uppercase"
-        >
-          <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm14 10v-2a4 4 0 0 0-3-3.87m-4-12a4 4 0 0 1 0 7.75" />
-          </svg>
-          <span>FRIENDS</span>
-        </button>
-
-       
-        <button
-          onClick={() => onTabChange?.("boards")}
-          className="py-2 px-1 border-2 border-black bg-white text-black rounded-lg flex flex-col items-center justify-center gap-0.5 text-[9px] font-lilita uppercase"
-        >
-          <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15m0 0a3 3 0 11-6 0 3 3 0 016 0zm15 0a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          <span>BOARDS</span>
-        </button>
-
-     
-        <button
-          className="py-2 px-1 border-2 border-black rounded-lg flex flex-col items-center justify-center gap-0.5 bg-zap-yellow text-black shadow-[2px_2px_0px_#000] transform -translate-x-[1px] -translate-y-[1px] text-[9px] font-lilita uppercase"
-        >
-          <svg viewBox="0 0 24 24" className="w-4 h-4 text-black" fill="currentColor">
-            <circle cx="12" cy="12" r="10" stroke="black" strokeWidth="2.5" fill="#FFEB3B" />
-            <circle cx="9" cy="10" r="1.5" fill="black" />
-            <circle cx="15" cy="10" r="1.5" fill="black" />
-            <path d="M8 14s1.5 2 4 2 4-2 4-2" stroke="black" strokeWidth="2" fill="none" strokeLinecap="round" />
-          </svg>
-          <span>ME</span>
-        </button>
-      </div> */}
-
-    </div>
   );
 }

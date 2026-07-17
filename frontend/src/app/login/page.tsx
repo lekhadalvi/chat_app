@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { authService } from "../../services/authService";
 
 interface HeartParticle {
   id: number;
@@ -14,16 +16,28 @@ interface HeartParticle {
   wobbleDist: number;
 }
 
+interface AuthFormInput {
+  email: string;
+  otp: string;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [step, setStep] = useState<"email" | "otp">("email");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [particles, setParticles] = useState<HeartParticle[]>([]);
+
+  const { register, handleSubmit, formState: { errors }, watch, resetField } = useForm<AuthFormInput>({
+    defaultValues: {
+      email: "",
+      otp: ""
+    }
+  });
+
+  const emailValue = watch("email");
   
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -75,43 +89,47 @@ export default function LoginPage() {
     setParticles((prev) => [...prev, ...newParticles]);
   };
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLoginSubmit = async (data: AuthFormInput) => {
     setError("");
     setSuccess("");
 
-    if (isSignUp && !email.trim()) {
-      setError("WHOA! EMAIL CANNOT BE BLANK!");
-      return;
-    }
-    if (!username.trim()) {
-      setError("WHOA! USERNAME CANNOT BE BLANK!");
-      return;
-    }
-    if (!password.trim()) {
-      setError("OOPS! PASSWORD CANNOT BE BLANK!");
-      return;
-    }
+    if (step === "email") {
+      setLoading(true);
+      try {
+        const resData = await authService.login(data.email);
+        setSuccess(resData.message || "OTP SENT TO YOUR MAIL!");
+        setStep("otp");
+      } catch (err: any) {
+        setError(err.message || "COULD NOT CONNECT TO THE SQUAD SERVER!");
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      setLoading(true);
+      try {
+        const resData = await authService.verify(data.email, data.otp);
+        setSuccess(
+          isSignUp 
+            ? "HELL YEAH! SIGNED UP SUCCESSFULLY! WELCOME!" 
+            : "HELL YEAH! LOGGED IN SUCCESSFULLY!"
+        );
+        
+        const user = resData.user;
+        // Store backend info in local storage
+        localStorage.setItem("zap_user_name", user.name || data.email.slice(0, 8));
+        localStorage.setItem("zap_authenticated", "true");
+        localStorage.setItem("zap_token", resData.token);
 
-    setLoading(true);
-    // Simulate API request
-    setTimeout(() => {
-      setLoading(false);
-      setSuccess(
-        isSignUp 
-          ? "HELL YEAH! SIGNED UP SUCCESSFULLY! WELCOME!" 
-          : "HELL YEAH! LOGGED IN SUCCESSFULLY!"
-      );
-      
-      // Store mock user info in local storage
-      localStorage.setItem("zap_user_name", username.trim());
-      localStorage.setItem("zap_authenticated", "true");
-
-      // Redirect to chats dashboard after 800ms
-      setTimeout(() => {
-        router.push("/chats");
-      }, 800);
-    }, 1200);
+        // Redirect to chats dashboard after 800ms
+        setTimeout(() => {
+          router.push("/chats");
+        }, 800);
+      } catch (err: any) {
+        setError(err.message || "COULD NOT VERIFY THE OTP!");
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   return (
@@ -237,30 +255,37 @@ export default function LoginPage() {
           </div>
 
           {/* Form Actions */}
-          <form onSubmit={handleLoginSubmit} className="flex flex-col gap-5">
-            {error && (
-              <div className="bg-[#FF5E5E] border-[3px] border-black p-3 text-white font-lilita text-sm tracking-wide shadow-[3px_3px_0px_#000] animate-pulse">
-                {error}
+          <form onSubmit={handleSubmit(handleLoginSubmit)} className="flex flex-col gap-5">
+            {(errors.email || errors.otp || error) && (
+              <div className="bg-[#FF5E5E] border-[3px] border-black p-3 text-white font-lilita text-sm tracking-wide shadow-[3px_3px_0px_#000] animate-pulse flex flex-col gap-1 select-none">
+                {errors.email && <span>{errors.email.message}</span>}
+                {errors.otp && <span>{errors.otp.message}</span>}
+                {error && <span>{error}</span>}
               </div>
             )}
             {success && (
-              <div className="bg-[#4CD964] border-[3px] border-black p-3 text-black font-lilita text-sm tracking-wide shadow-[3px_3px_0px_#000]">
+              <div className="bg-[#4CD964] border-[3px] border-black p-3 text-black font-lilita text-sm tracking-wide shadow-[3px_3px_0px_#000] select-none">
                 {success}
               </div>
             )}
 
-            {/* Email Input Group (Only visible during Sign Up) */}
-            {isSignUp && (
+            {/* Email / OTP Input Group */}
+            {step === "email" ? (
               <div className="flex flex-col gap-1.5 animate-in fade-in duration-200">
                 <label className="font-lilita text-xs tracking-wider uppercase text-black/70">
-                  EMAIL
+                  EMAIL ADDRESS
                 </label>
                 <div className="relative">
                   <input
                     type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
                     placeholder="gamer@zaptalk.com"
+                    {...register("email", {
+                      required: "WHOA! EMAIL CANNOT BE BLANK!",
+                      pattern: {
+                        value: /\S+@\S+\.\S+/,
+                        message: "OOPS! THAT DOESN'T LOOK LIKE A VALID EMAIL!"
+                      }
+                    })}
                     className="w-full bg-white text-black font-semibold placeholder-black/40 border-[3px] border-black px-4 py-3 pr-11 rounded-sm shadow-[4px_4px_0px_rgba(0,0,0,1)] focus:outline-none focus:bg-amber-50 focus:translate-x-[1px] focus:translate-y-[1px] focus:shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all"
                   />
                   <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-black/50 pointer-events-none w-5 h-5">
@@ -278,109 +303,65 @@ export default function LoginPage() {
                   </div>
                 </div>
               </div>
+            ) : (
+              <div className="flex flex-col gap-1.5 animate-in fade-in duration-200">
+                <div className="flex justify-between items-center">
+                  <label className="font-lilita text-xs tracking-wider uppercase text-black/70">
+                    ENTER OTP CODE
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep("email");
+                      resetField("otp");
+                      setError("");
+                      setSuccess("");
+                    }}
+                    className="text-xs text-zap-purple underline font-black hover:text-purple-800"
+                  >
+                    CHANGE EMAIL
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="12345"
+                    {...register("otp", {
+                      required: "WHOA! OTP CANNOT BE BLANK!"
+                    })}
+                    className="w-full bg-white text-black font-semibold placeholder-black/40 border-[3px] border-black px-4 py-3 pr-11 rounded-sm shadow-[4px_4px_0px_rgba(0,0,0,1)] focus:outline-none focus:bg-amber-50 focus:translate-x-[1px] focus:translate-y-[1px] focus:shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all"
+                  />
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-black/50 pointer-events-none w-5 h-5">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                  </div>
+                </div>
+                <span className="text-[10px] text-black/50 mt-1 font-semibold">
+                  Sent to {emailValue}. Check your inbox!
+                </span>
+              </div>
             )}
 
-            {/* Username Input Group */}
-            <div className="flex flex-col gap-1.5">
-              <label className="font-lilita text-xs tracking-wider uppercase text-black/70">
-                USERNAME
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="GamerTag_99"
-                  className="w-full bg-white text-black font-semibold placeholder-black/40 border-[3px] border-black px-4 py-3 pr-11 rounded-sm shadow-[4px_4px_0px_rgba(0,0,0,1)] focus:outline-none focus:bg-amber-50 focus:translate-x-[1px] focus:translate-y-[1px] focus:shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all"
-                />
-                <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-black/50 pointer-events-none w-5 h-5">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Password Input Group */}
-            <div className="flex flex-col gap-1.5">
-              <label className="font-lilita text-xs tracking-wider uppercase text-black/70">
-                PASSWORD
-              </label>
-              <div className="relative">
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="........"
-                  className="w-full bg-white text-black font-semibold placeholder-black/40 border-[3px] border-black px-4 py-3 pr-11 rounded-sm shadow-[4px_4px_0px_rgba(0,0,0,1)] focus:outline-none focus:bg-amber-50 focus:translate-x-[1px] focus:translate-y-[1px] focus:shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all"
-                />
-                <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-black/50 pointer-events-none w-5 h-5">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Login Button */}
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
               className="w-full bg-zap-purple text-white font-lilita text-xl py-3.5 uppercase border-[3.5px] border-black rounded-sm shadow-[5px_5px_0px_rgba(0,0,0,1)] cursor-pointer select-none hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all disabled:bg-purple-900/50 disabled:cursor-not-allowed"
             >
               {loading 
-                ? (isSignUp ? "SIGNING UP..." : "LOGGING IN...") 
-                : (isSignUp ? "SIGN UP!" : "LOGIN!")}
+                ? (step === "email" ? "SENDING CODE..." : "VERIFYING...") 
+                : (step === "email" ? "GET OTP!" : "LET ME IN!")}
             </button>
           </form>
-
-          {/* Divider */}
-          {/* <div className="flex items-center gap-3 my-6 select-none">
-            <div className="flex-grow h-[2px] bg-black"></div>
-            <span className="font-lilita text-[10px] md:text-xs tracking-wider uppercase text-black/75">
-              OR USE THESE
-            </span>
-            <div className="flex-grow h-[2px] bg-black"></div>
-          </div> */}
-
-          {/* Social login buttons */}
-          {/* <div className="grid grid-cols-2 gap-3.5 select-none">
-            <button
-              onClick={() => alert("Google Login Pressed!")}
-              className="bg-zap-cyan text-black font-lilita text-sm py-3 px-3.5 border-[3px] border-black rounded-sm shadow-[4px_4px_0px_rgba(0,0,0,1)] cursor-pointer flex items-center justify-center gap-2 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
-            >
-              <svg viewBox="0 0 24 24" className="w-5 h-5 flex-shrink-0" fill="currentColor">
-                <path d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.2-5.136 4.2A5.72 5.72 0 0 1 8.28 12.87a5.72 5.72 0 0 1 5.711-5.73 5.48 5.48 0 0 1 3.9 1.55l3.11-3.11A9.9 9.9 0 0 0 13.99 3c-5.52 0-10 4.48-10 10s4.48 10 10 10c5.77 0 9.6-4.06 9.6-9.77 0-.66-.06-1.3-.17-1.945H12.24Z" />
-              </svg>
-              <span>GOOGLE</span>
-            </button>
-
-            <button
-              onClick={() => alert("Discord Login Pressed!")}
-              className="bg-[#5865F2] text-white font-lilita text-sm py-3 px-3.5 border-[3px] border-black rounded-sm shadow-[4px_4px_0px_rgba(0,0,0,1)] cursor-pointer flex items-center justify-center gap-2 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
-            >
-              <svg viewBox="0 0 127.14 96.36" className="w-5 h-5 flex-shrink-0" fill="currentColor">
-                <path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.2,77.2,0,0,0-3.3,6.83A96.67,96.67,0,0,0,52.88,6.83,77.2,77.2,0,0,0,49.58,0,105.15,105.15,0,0,0,19.14,8.07C3,31.58-1.45,54.47,1,77.06A107.4,107.4,0,0,0,32,96.36a77.7,77.7,0,0,0,6.63-10.85,71.43,71.43,0,0,1-10.5-5c.89-.65,1.76-1.34,2.58-2.07a76.88,76.88,0,0,0,72.24,0c.83.73,1.69,1.42,2.58,2.07a71.43,71.43,0,0,1-10.5,5,77.7,77.7,0,0,0,6.63,10.85,107.4,107.4,0,0,0,31-19.3C129.89,47.88,124.62,25.29,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.88,46,53.88,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.12,46,96.12,53,91,65.69,84.69,65.69Z" />
-              </svg>
-              <span>DISCORD</span>
-            </button>
-          </div> */}
 
           {/* Form Footer Links */}
           <div className="flex flex-col items-center gap-2.5 mt-6 pt-4 border-t-[2.5px] border-black select-none text-center">
@@ -389,6 +370,8 @@ export default function LoginPage() {
               <span
                 onClick={() => {
                   setIsSignUp(!isSignUp);
+                  setStep("email");
+                  resetField("otp");
                   setError("");
                   setSuccess("");
                 }}
@@ -398,10 +381,9 @@ export default function LoginPage() {
               </span>
             </span>
             <span
-              onClick={() => alert("Forgot Password Pressed!")}
-              className="text-[10px] md:text-xs font-black tracking-widest text-black/60 cursor-pointer hover:text-black transition-colors"
+              className="text-[10px] md:text-xs font-black tracking-widest text-black/60 cursor-default"
             >
-              I FORGOT MY PASSWORD... OOPS
+              SECURED WITH PASSWORDLESS MAGIC CODES ⚡
             </span>
           </div>
         </div>

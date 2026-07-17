@@ -1,156 +1,125 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useEffect } from "react";
+import { AppProvider } from "../../context/AppContext";
+import { SocketProvider, useSocket } from "../../context/SocketContext";
 import { AppShell } from "../../components/layout/AppShell";
-import { Chat, User, Message } from "../../types";
-import { mockChats, currentUser as defaultUser } from "../../lib/mock-data";
+import { useAuth } from "../../hooks/useAuth";
+import { useChat } from "../../hooks/useChat";
 
-export default function ChatsPage() {
-  const router = useRouter();
-  const [user, setUser] = useState<User>(defaultUser);
-  const [chats, setChats] = useState<Chat[]>(mockChats);
-  const [activeChatId, setActiveChatId] = useState<string>("chat_1");
+function ChatsDashboard() {
+  const { user, verifyAuth, loading, updateName } = useAuth();
+  const { 
+    chats, 
+    setChats,
+    activeChatId, 
+    setActiveChatId, 
+    fetchChatsList, 
+    sendMessage, 
+    createChat 
+  } = useChat();
+  const { socket } = useSocket();
 
-  // Load custom user info from localStorage if available
+  // Verify auth on mount
   useEffect(() => {
-    const auth = localStorage.getItem("zap_authenticated");
-    if (!auth) {
-      // Redirect back to login if not authenticated
-      router.push("/login");
-      return;
-    }
+    verifyAuth();
+  }, [verifyAuth]);
 
-    const savedName = localStorage.getItem("zap_user_name");
-    if (savedName) {
-      setUser((prev) => ({
-        ...prev,
-        name: savedName,
-      }));
+  // Load chat list once user is verified
+  useEffect(() => {
+    if (user.id) {
+      fetchChatsList();
     }
-  }, [router]);
+  }, [user.id, fetchChatsList]);
 
-  const handleSendMessage = (chatId: string, content: string) => {
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    
-    const newMsg: Message = {
-      id: `msg_${Date.now()}_${Math.random()}`,
-      senderId: user.id,
-      content,
-      timestamp: timeStr,
+  // Join/leave chat rooms for real-time messaging
+  useEffect(() => {
+    if (!socket || !activeChatId) return;
+
+    socket.emit("joinchat", activeChatId);
+
+    return () => {
+      socket.emit("leavechat", activeChatId);
     };
+  }, [socket, activeChatId]);
 
-    setChats((prevChats) =>
-      prevChats.map((chat) => {
-        if (chat.id === chatId) {
-          return {
-            ...chat,
-            messages: [...chat.messages, newMsg],
-          };
-        }
-        return chat;
-      })
-    );
+  // Listen for real-time socket events
+  useEffect(() => {
+    if (!socket) return;
 
-    // Mock automatic reply from a squadmate or DM member to make the app interactive!
-    setTimeout(() => {
-      const activeChat = chats.find((c) => c.id === chatId);
-      if (!activeChat) return;
+    const handleNewMessage = (data: { chatId: string; message: any }) => {
+      setChats((prev) =>
+        prev.map((c) => {
+          if (c.id === data.chatId) {
+            // Prevent duplicate message rendering
+            const exists = c.messages.some((m) => m.id === data.message.id);
+            if (exists) return c;
 
-      const mockReplies = [
-        "OH DAMN! That's awesome!",
-        "Yo, who let the chaos out? 😂",
-        "Wait, are you coding this right now?",
-        "Double-borders are looking super clean!",
-        "LMAO let's gooo 🚀",
-        "Indeed. Ready when you are!",
-      ];
-      
-      const randomReply = mockReplies[Math.floor(Math.random() * mockReplies.length)];
-      const replierId = activeChat.isGroup ? "user_2" : "user_1"; // Default mockup replier
-
-      const replyMsg: Message = {
-        id: `reply_${Date.now()}_${Math.random()}`,
-        senderId: replierId,
-        content: randomReply,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-
-      setChats((prevChats) =>
-        prevChats.map((chat) => {
-          if (chat.id === chatId) {
             return {
-              ...chat,
-              messages: [...chat.messages, replyMsg],
+              ...c,
+              lastMessage: data.message.content,
+              lastMessageTime: data.message.timestamp,
+              messages: [...c.messages, data.message],
+              unreadCount: c.id === activeChatId ? c.unreadCount : c.unreadCount + 1
             };
           }
-          return chat;
+          return c;
         })
       );
-    }, 1200);
-  };
-
-  const handleSelectChat = (chatId: string) => {
-    setActiveChatId(chatId);
-    
-    // Clear unread count on selection
-    setChats((prevChats) =>
-      prevChats.map((chat) => {
-        if (chat.id === chatId) {
-          return {
-            ...chat,
-            unreadCount: 0,
-          };
-        }
-        return chat;
-      })
-    );
-  };
-
-  const handleToggleBlock = (chatId: string) => {
-    setChats((prevChats) =>
-      prevChats.map((chat) => {
-        if (chat.id === chatId) {
-          return {
-            ...chat,
-            isBlocked: !chat.isBlocked,
-          };
-        }
-        return chat;
-      })
-    );
-  };
-
-  const handleCreateChat = (name: string) => {
-    const cleanName = name.replace("_", " ");
-    const newChatId = `chat_${Date.now()}`;
-    const newChat: Chat = {
-      id: newChatId,
-      name: cleanName,
-      avatarColor: name === "FREY" ? "var(--color-zap-purple)" : "var(--color-zap-pink)",
-      lastMessage: "No messages yet. Spill the tea...",
-      timestamp: "Now",
-      unreadCount: 0,
-      messages: [],
     };
-    setChats((prev) => [newChat, ...prev]);
-    setActiveChatId(newChatId);
-  };
+
+    const handleMessagesSeen = (data: { chatId: string; seenBy: string }) => {
+      setChats((prev) =>
+        prev.map((c) => {
+          if (c.id === data.chatId) {
+            return {
+              ...c,
+              unreadCount: 0
+            };
+          }
+          return c;
+        })
+      );
+    };
+
+    socket.on("newMessage", handleNewMessage);
+    socket.on("messagesSeen", handleMessagesSeen);
+
+    return () => {
+      socket.off("newMessage", handleNewMessage);
+      socket.off("messagesSeen", handleMessagesSeen);
+    };
+  }, [socket, setChats, activeChatId]);
+  if (loading) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#f8f7f3] select-none">
+        <div className="w-16 h-20 text-zap-purple animate-bounce mb-4">
+          <svg viewBox="0 0 100 100" className="w-full h-full filter drop-shadow-[2px_2px_0px_#000]" fill="currentColor" stroke="black" strokeWidth="4">
+            <polygon points="60,5 20,55 50,55 40,95 80,45 50,45" />
+          </svg>
+        </div>
+        <h2 className="font-lilita text-xl uppercase tracking-wider text-black animate-pulse">
+          CONNECTING TO SQUAD...
+        </h2>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-0 md:p-8 bg-transparent">
       <div className="w-full h-screen md:h-[85vh] max-w-[1200px] flex">
-        <AppShell
-          currentUser={user}
-          chats={chats}
-          activeChatId={activeChatId}
-          onSelectChat={handleSelectChat}
-          onSendMessage={handleSendMessage}
-          onToggleBlock={handleToggleBlock}
-          onCreateChat={handleCreateChat}
-        />
+        <AppShell />
       </div>
     </div>
+  );
+}
+
+export default function ChatsPage() {
+  return (
+    <AppProvider>
+      <SocketProvider>
+        <ChatsDashboard />
+      </SocketProvider>
+    </AppProvider>
   );
 }

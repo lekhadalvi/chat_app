@@ -3,6 +3,7 @@ import { Chat } from "../models/chats.model.js";
 import { Message } from "../models/Message.models.js";
 import type { AuthenticatedRequest, IUser } from "../middlewares/isAuth.js";
 import axios from "axios";
+import { io, UserSocketMap } from "../config/sockets.js";
 
 export const createNewChat = TryCatch<AuthenticatedRequest>(async (req, res) => {
     const userId = req.user?._id;
@@ -167,9 +168,21 @@ export const sendMessage = TryCatch(async(req:AuthenticatedRequest,res) =>{
     updatedAt: new Date(),
    },{new:true})
 
-   //emit socket event to the other user
-   
-   res.status(201).json({ message: savedMessage, sender: senderId })
+    // Emit socket event to notify the other user about the new message
+    const otherUserSocketId = UserSocketMap[otherUserId.toString()];
+    if (otherUserSocketId) {
+        io.to(otherUserSocketId).emit("newMessage", {
+            chatId,
+            message: {
+                id: savedMessage._id,
+                senderId: savedMessage.sender,
+                content: savedMessage.text,
+                timestamp: new Date(savedMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            }
+        });
+    }
+    
+    res.status(201).json({ message: savedMessage, sender: senderId })
 })
 
 export const getMessageByChat = TryCatch<AuthenticatedRequest>(async (req, res) => {
@@ -198,7 +211,7 @@ export const getMessageByChat = TryCatch<AuthenticatedRequest>(async (req, res) 
         return;
     }
 
-    await Message.updateMany(
+    const result = await Message.updateMany(
         { chatId, seen: false, sender: { $ne: userId } },
         { $set: { seen: true, seenAt: new Date() } }
     );
@@ -212,12 +225,13 @@ export const getMessageByChat = TryCatch<AuthenticatedRequest>(async (req, res) 
     }
 
     // socket work
-
-    const unknownUser = {
-        _id: otherUserId,
-        name: "Unknown user name",
-        email: "Unknown user email",
-    };
+    if (result.modifiedCount > 0) {
+        // Emit a socket event to notify the other user that the messages have been marked as seen
+        const otherUserSocketId = UserSocketMap[otherUserId.toString()];
+        if (otherUserSocketId) {
+            io.to(otherUserSocketId).emit("messagesSeen", { chatId, seenBy: userId });
+        }
+    }
 
     try {
         const { data } = await axios.get<IUser>(
@@ -226,6 +240,13 @@ export const getMessageByChat = TryCatch<AuthenticatedRequest>(async (req, res) 
         res.json({ messages, otherUser: data });
     } catch (error) {
         console.error(`Error fetching user ${otherUserId}:`, error);
-        res.json({ messages, otherUser: unknownUser });
+        res.json({
+            messages,
+            otherUser: {
+                _id: otherUserId,
+                name: "Unknown user name",
+                email: "Unknown user email",
+            }
+        });
     }
 })

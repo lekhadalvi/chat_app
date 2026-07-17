@@ -2,12 +2,15 @@ import React, { useState } from "react";
 
 interface MessageInputProps {
   onSendMessage: (content: string) => void;
+  onTyping?: () => void;
+  onStopTyping?: () => void;
 }
 
-export function MessageInput({ onSendMessage }: MessageInputProps) {
+export function MessageInput({ onSendMessage, onTyping, onStopTyping }: MessageInputProps) {
   const [text, setText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
+  const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,6 +18,14 @@ export function MessageInput({ onSendMessage }: MessageInputProps) {
     onSendMessage(text);
     setText("");
     setShowEmojiPicker(false);
+
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+      setTypingTimeout(null);
+    }
+    if (onStopTyping) {
+      onStopTyping();
+    }
   };
 
   const reactions = [
@@ -140,7 +151,26 @@ export function MessageInput({ onSendMessage }: MessageInputProps) {
           <input
             type="text"
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              setText(val);
+
+              if (onTyping) {
+                onTyping();
+              }
+
+              if (typingTimeout) {
+                clearTimeout(typingTimeout);
+              }
+
+              const timeout = setTimeout(() => {
+                if (onStopTyping) {
+                  onStopTyping();
+                }
+              }, 1500);
+
+              setTypingTimeout(timeout);
+            }}
             placeholder="Spill the tea..."
             className="w-full bg-white text-black font-semibold placeholder-black/40 border-[3px] border-black px-5 py-3 pr-12 rounded-[15px] shadow-[3.5px_3.5px_0px_#000] focus:outline-none focus:bg-amber-50 focus:translate-x-[0.5px] focus:translate-y-[0.5px] focus:shadow-[3px_3px_0px_#000] transition-all text-xs md:text-sm"
           />

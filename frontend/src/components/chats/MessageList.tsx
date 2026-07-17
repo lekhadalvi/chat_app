@@ -1,14 +1,15 @@
 import React, { useEffect, useRef } from "react";
 import { Message, User } from "../../types";
 import { Avatar } from "../ui/Avatar";
-import { mockUsers } from "../../lib/mock-data";
 
 interface MessageListProps {
   messages: Message[];
   currentUser: User;
+  chatName: string;
+  chatColor: string;
 }
 
-export function MessageList({ messages, currentUser }: MessageListProps) {
+export function MessageList({ messages, currentUser, chatName, chatColor }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,9 +39,9 @@ export function MessageList({ messages, currentUser }: MessageListProps) {
         
         const sender = isMe 
           ? currentUser 
-          : mockUsers.find((u) => u.id === msg.senderId) || {
-              name: "Julianne",
-              avatarColor: "var(--color-zap-pink)",
+          : {
+              name: chatName,
+              avatarColor: chatColor,
             };
 
         // Alternate bubble rotations for a hand-drawn crooked effect (stronger for polaroids)
