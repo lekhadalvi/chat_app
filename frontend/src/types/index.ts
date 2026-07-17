@@ -1,6 +1,7 @@
 export interface User {
   id: string;
   name: string;
+  email: string;
   avatarUrl?: string;
   avatarColor: string;
   isOnline: boolean;
@@ -23,5 +24,5 @@ export interface Chat {
   lastMessageTime?: string;
   unreadCount: number;
   messages: Message[];
-  isBlocked?: boolean;
+  otherUserId?: string;
 }

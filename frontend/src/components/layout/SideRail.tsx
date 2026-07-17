@@ -63,8 +63,8 @@ export function SideRail({ currentUser, activeTab = "chats", onTabChange, onAddF
         onClick={() => onTabChange?.("me")}
         className="flex flex-col items-center gap-1 cursor-pointer transition-transform active:scale-95"
       >
-        <div className="w-12 h-12 bg-white border-[3px] border-black rounded-sm shadow-[3.5px_3.5px_0px_#000] flex items-center justify-center font-lilita text-lg uppercase hover:bg-neutral-50">
-          NC
+        <div className="w-12 h-12 bg-white border-[3px] border-black rounded-sm shadow-[3.5px_3.5px_0px_#000] flex items-center justify-center font-lilita text-xl uppercase hover:bg-neutral-50 select-none">
+          {currentUser.email ? currentUser.email.charAt(0).toUpperCase() : (currentUser.name ? currentUser.name.charAt(0).toUpperCase() : "G")}
         </div>
       </div>
 

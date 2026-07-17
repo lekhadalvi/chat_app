@@ -3,16 +3,18 @@ import { Chat, User } from "../../types";
 import { ChatHeader } from "../chats/ChatHeader";
 import { MessageList } from "../chats/MessageList";
 import { MessageInput } from "../chats/MessageInput";
+import { useSocket } from "../../context/SocketContext";
 
 interface ChatAreaProps {
   chat?: Chat;
   currentUser: User;
   onSendMessage: (chatId: string, content: string) => void;
   onBack?: () => void;
-  onToggleBlock?: (chatId: string) => void;
 }
 
-export function ChatArea({ chat, currentUser, onSendMessage, onBack, onToggleBlock }: ChatAreaProps) {
+export function ChatArea({ chat, currentUser, onSendMessage, onBack }: ChatAreaProps) {
+  const { socket } = useSocket();
+
   if (!chat) {
     return (
       <div className="flex-grow flex flex-col items-center justify-center bg-[#f8f7f3] p-8 text-center select-none h-full border-b-[3.5px] border-black md:border-b-0">
@@ -35,16 +37,32 @@ export function ChatArea({ chat, currentUser, onSendMessage, onBack, onToggleBlo
     onSendMessage(chat.id, content);
   };
 
+  const handleTyping = () => {
+    if (socket && chat) {
+      socket.emit("typing", { chatId: chat.id, userId: currentUser.id });
+    }
+  };
+
+  const handleStopTyping = () => {
+    if (socket && chat) {
+      socket.emit("stopTyping", { chatId: chat.id, userId: currentUser.id });
+    }
+  };
+
   return (
     <div className="flex-grow flex flex-col h-full bg-[#f8f7f3] min-w-0">
       {/* Top Convo Header */}
-      <ChatHeader chat={chat} onBack={onBack} onToggleBlock={onToggleBlock} />
+      <ChatHeader chat={chat} onBack={onBack} />
 
       {/* Main Message Listing */}
-      <MessageList messages={chat.messages} currentUser={currentUser} />
+      <MessageList messages={chat.messages} currentUser={currentUser} chatName={chat.name} chatColor={chat.avatarColor} />
 
       {/* Input panel bar */}
-      <MessageInput onSendMessage={handleSend} />
+      <MessageInput 
+        onSendMessage={handleSend} 
+        onTyping={handleTyping}
+        onStopTyping={handleStopTyping}
+      />
     </div>
   );
 }
