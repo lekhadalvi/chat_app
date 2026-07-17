@@ -4,6 +4,7 @@ import { Message } from "../models/Message.models.js";
 import type { AuthenticatedRequest, IUser } from "../middlewares/isAuth.js";
 import axios from "axios";
 import { io, UserSocketMap } from "../config/sockets.js";
+import { publishToQueue } from "../config/rabbitmq.js";
 
 export const createNewChat = TryCatch<AuthenticatedRequest>(async (req, res) => {
     const userId = req.user?._id;
@@ -51,8 +52,6 @@ export const fetchAllChats = TryCatch<AuthenticatedRequest>(async (req, res) => 
 
     const chatwithUserData = await Promise.all(
         chats.map(async (chat) => {
-            const otherUserId = chat.users.find((id) => id.toString() !== userId);
-
             const unseenCount = await Message.countDocuments({
                 chatId: chat._id,
                 seen: false,
@@ -65,6 +64,16 @@ export const fetchAllChats = TryCatch<AuthenticatedRequest>(async (req, res) => 
                 unseenCount,
             };
 
+            if (chat.isGroup) {
+                const groupUser = {
+                    _id: "",
+                    name: chat.groupName || "Group Squad",
+                    email: "Group Chat"
+                };
+                return { user: groupUser, chat: chatData };
+            }
+
+            const otherUserId = chat.users.find((id) => id.toString() !== userId);
             const unknownUser = {
                 _id: otherUserId,
                 name: "Unknown user name",
@@ -250,3 +259,134 @@ export const getMessageByChat = TryCatch<AuthenticatedRequest>(async (req, res) 
         });
     }
 })
+
+export const createGroupChat = TryCatch<AuthenticatedRequest>(async (req, res) => {
+    const userId = req.user?._id;
+    const { groupName, userIds } = req.body;
+
+    if (!userId) {
+        res.status(401).json({ message: "please login" });
+        return;
+    }
+
+    if (!groupName || !userIds || !Array.isArray(userIds) || userIds.length === 0) {
+        res.status(400).json({ message: "groupName and non-empty userIds are required" });
+        return;
+    }
+
+    const members = Array.from(new Set([userId, ...userIds]));
+
+    const newChat = await Chat.create({
+        users: members,
+        isGroup: true,
+        groupName,
+    });
+
+    members.forEach((memberId) => {
+        const socketId = UserSocketMap[memberId.toString()];
+        if (socketId) {
+            io.to(socketId).emit("newChat", { chatId: newChat._id });
+        }
+    });
+
+    const creatorName = req.user?.name || "A gamer";
+    for (const memberId of userIds) {
+        if (memberId.toString() === userId.toString()) continue;
+        try {
+            const { data: memberUser } = await axios.get<IUser>(
+                `${process.env.USER_SERVICE_URL}/api/v1/user/${memberId}`
+            );
+            if (memberUser && memberUser.email) {
+                await publishToQueue("send-invite", {
+                    senderName: creatorName,
+                    invitedEmail: memberUser.email,
+                    invitedName: memberUser.name,
+                    chatName: groupName
+                });
+            }
+        } catch (e) {
+            console.error("Failed to publish invite for group member:", memberId);
+        }
+    }
+
+    res.status(201).json({ message: "group chat created", chat: newChat._id });
+});
+
+export const inviteUserChat = TryCatch<AuthenticatedRequest>(async (req, res) => {
+    const userId = req.user?._id;
+    const { query } = req.body;
+
+    if (!userId) {
+        res.status(401).json({ message: "please login" });
+        return;
+    }
+
+    if (!query) {
+        res.status(400).json({ message: "search query (id or email) is required" });
+        return;
+    }
+
+    let invitedUser: any = null;
+
+    try {
+        if (query.includes("@")) {
+            const token = req.headers.authorization;
+            const { data } = await axios.post(
+                `${process.env.USER_SERVICE_URL}/api/v1/user/find-or-create`,
+                { email: query },
+                { headers: { Authorization: token } }
+            );
+            invitedUser = data;
+        } else {
+            const { data } = await axios.get(
+                `${process.env.USER_SERVICE_URL}/api/v1/user/${query}`
+            );
+            invitedUser = data;
+        }
+    } catch (err: any) {
+        console.error("Failed to query user service:", err.message);
+        res.status(404).json({ message: "invited user not found" });
+        return;
+    }
+
+    if (!invitedUser) {
+        res.status(404).json({ message: "invited user not found" });
+        return;
+    }
+
+    const otherUserId = invitedUser._id.toString();
+
+    if (otherUserId === userId.toString()) {
+        res.status(400).json({ message: "cannot create a chat with yourself" });
+        return;
+    }
+
+    const existingChat = await Chat.findOne({
+        isGroup: false,
+        users: { $all: [userId, otherUserId], $size: 2 },
+    });
+
+    if (existingChat) {
+        res.status(200).json({ message: "chat already exists", chat: existingChat._id });
+        return;
+    }
+
+    const newChat = await Chat.create({
+        users: [userId, otherUserId],
+        isGroup: false,
+    });
+
+    const socketId = UserSocketMap[otherUserId];
+    if (socketId) {
+        io.to(socketId).emit("newChat", { chatId: newChat._id });
+    }
+
+    await publishToQueue("send-invite", {
+        senderName: req.user?.name || "A gamer",
+        invitedEmail: invitedUser.email,
+        invitedName: invitedUser.name,
+        chatName: ""
+    });
+
+    res.status(201).json({ message: "chat created and user invited", chat: newChat._id });
+});

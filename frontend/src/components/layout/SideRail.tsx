@@ -91,13 +91,13 @@ export function SideRail({ currentUser, activeTab = "chats", onTabChange, onAddF
       </div> */}
 
       {/* Bottom Yellow Plus Add Button (Triggers invite modal) */}
-      <button
+      {/* <button
         onClick={onAddFriendClick}
         className="w-11 h-11 bg-zap-yellow text-black border-[3px] border-black rounded-full shadow-[2.5px_2.5px_0px_#000] flex items-center justify-center font-lilita text-xl font-bold cursor-pointer hover:translate-x-[0.5px] hover:translate-y-[0.5px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
         title="Add Chat"
       >
         +
-      </button>
+      </button> */}
     </div>
   );
 }

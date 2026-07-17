@@ -88,42 +88,40 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!token) return;
 
     try {
-      const dbChats = await chatService.fetchChats(token);
-      const mapped = dbChats.map((c: any) => {
-        const otherUser = c.users.find((u: any) => u._id !== user.id) || {
-          _id: "",
-          name: "Unknown Gamer",
-          email: ""
-        };
+      const resData = await chatService.fetchChats(token);
+      const dbChats = resData.chats || [];
+      const mapped = dbChats.map((item: any) => {
+        const lastMsgText = item.chat.latestMessage ? item.chat.latestMessage.text : "";
+        const timeStr = item.chat.updatedAt 
+          ? new Date(item.chat.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          : "Now";
 
-        const charSum = otherUser.name.split("").reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
         const colors = [
           "var(--color-zap-pink)",
           "var(--color-zap-purple)",
           "var(--color-zap-cyan)",
           "var(--color-zap-yellow)"
         ];
+        const nameSum = item.user.name.split("").reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
+        const avatarColor = colors[nameSum % colors.length];
 
         return {
-          id: c._id,
-          name: otherUser.name,
-          avatarColor: colors[charSum % colors.length],
+          id: item.chat._id,
+          name: item.user.name,
+          avatarColor,
           isGroup: false,
-          unreadCount: 0,
-          messages: c.messages.map((m: any) => ({
-            id: m._id,
-            senderId: m.sender,
-            content: m.content,
-            timestamp: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          })),
-          otherUserId: otherUser._id
+          lastMessage: lastMsgText,
+          lastMessageTime: timeStr,
+          unreadCount: item.chat.unseenCount,
+          messages: [],
+          otherUserId: item.user._id
         };
       });
       setChats(mapped);
     } catch (err) {
       console.error("Failed to load chats", err);
     }
-  }, [user.id]);
+  }, []);
 
   // 3. Send Message
   const sendMessage = async (chatId: string, content: string) => {

@@ -1,7 +1,7 @@
 import { CHAT_SERVICE_URL } from "../lib/constants";
 
 export const chatService = {
-  async fetchChats(token: string): Promise<any[]> {
+  async fetchChats(token: string): Promise<any> {
     const res = await fetch(`${CHAT_SERVICE_URL}/api/v1/chat/all`, {
       headers: {
         "Authorization": `Bearer ${token}`

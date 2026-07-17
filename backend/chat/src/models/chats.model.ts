@@ -2,6 +2,8 @@ import mongoose,{Document,  Schema,} from "mongoose";
 
 export interface IChat extends Document {
     users : string[];
+    isGroup: boolean;
+    groupName: string;
     latestMessage? : {
         text : string;
         sender : string;
@@ -15,6 +17,14 @@ const schema : Schema <IChat> = new Schema ({
         type: String,
         required : [true,"users are required"]
     }],
+    isGroup: {
+        type: Boolean,
+        default: false
+    },
+    groupName: {
+        type: String,
+        default: ""
+    },
     latestMessage : {
         text : {
             type: String,

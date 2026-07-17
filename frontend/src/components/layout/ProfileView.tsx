@@ -143,9 +143,9 @@ export function ProfileView() {
             </div>
           </div>
 
-              {/* Display name and status */}
-              <div className="text-center md:text-left select-text flex flex-col items-center md:items-start justify-center pt-2 w-full max-w-xs">
-                {isEditing ? (
+          {/* Display name and status */}
+          <div className="text-center select-text flex flex-col items-center justify-center pt-2 w-full max-w-xs">
+            {isEditing ? (
                   <form
                     onSubmit={handleSubmit(async (data) => {
                       const trimmedName = data.username.trim();
@@ -165,15 +165,15 @@ export function ProfileView() {
                         setLoading(false);
                       }
                     })}
-                    className="flex flex-col gap-2 w-full mt-2"
+                    className="flex flex-col gap-2 w-full mt-2 items-center"
                   >
                     <input
                       type="text"
                       {...register("username", { required: true })}
-                      className="bg-white text-black font-lilita text-lg uppercase border-[3px] border-black px-3 py-1.5 rounded-sm shadow-[3px_3px_0px_rgba(0,0,0,1)] focus:outline-none"
+                      className="bg-white text-black font-lilita text-lg uppercase border-[3px] border-black px-3 py-1.5 rounded-sm shadow-[3px_3px_0px_rgba(0,0,0,1)] focus:outline-none text-center"
                     />
                     {formErrors.username && <span className="text-[10px] text-[#FF5E5E] font-lilita uppercase select-none">WHOA! USERNAME CANNOT BE BLANK!</span>}
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 justify-center">
                       <button
                         type="submit"
                         disabled={loading}
@@ -194,8 +194,8 @@ export function ProfileView() {
                     </div>
                   </form>
                 ) : (
-                  <div className="flex flex-col items-center md:items-start">
-                    <div className="flex items-center gap-2.5">
+                  <div className="flex flex-col items-center justify-center">
+                    <div className="flex items-center gap-2.5 justify-center">
                       <h2 className="font-lilita text-2xl uppercase tracking-wide">
                         @{currentUser.name || "GAMER"}
                       </h2>
@@ -209,6 +209,12 @@ export function ProfileView() {
                         </svg>
                       </button>
                     </div>
+                    {/* Show user's email */}
+                    {currentUser.email && (
+                      <span className="font-mono text-xs text-black/60 font-bold mt-1 select-all">
+                        {currentUser.email}
+                      </span>
+                    )}
                     {/* Crooked Status banner */}
                     <div className="inline-block mt-3 bg-zap-yellow text-black font-lilita text-xs py-2 px-5 border-[3px] border-black rounded-sm shadow-[3px_3.5px_0px_#000] transform -rotate-[3deg]">
                       Online & Hyped! ⚡
@@ -218,26 +224,26 @@ export function ProfileView() {
               </div>
 
             {/* 3 Quick Stats columns */}
-            <div className="w-full max-w-sm grid grid-cols-3 gap-3.5">
-              {/* Stickers */}
+            {/* <div className="w-full max-w-sm grid grid-cols-3 gap-3.5">
+             
               <div className="bg-white border-[3px] border-black p-2.5 rounded-sm shadow-[3.5px_3.5px_0px_#000] flex flex-col items-center justify-center">
                 <span className="font-lilita text-[8px] md:text-[9px] uppercase tracking-wider text-black/50">STICKERS</span>
                 <span className="font-lilita text-lg md:text-xl text-[#FF00E0] mt-0.5">{dynamicStickers}</span>
               </div>
-              {/* Streaks */}
+             
               <div className="bg-white border-[3px] border-black p-2.5 rounded-sm shadow-[3.5px_3.5px_0px_#000] flex flex-col items-center justify-center">
                 <span className="font-lilita text-[8px] md:text-[9px] uppercase tracking-wider text-black/50">STREAKS</span>
                 <span className="font-lilita text-lg md:text-xl text-[#8E790B] mt-0.5">{dynamicStreaks}</span>
               </div>
-              {/* Art */}
+              
               <div className="bg-white border-[3px] border-black p-2.5 rounded-sm shadow-[3.5px_3.5px_0px_#000] flex flex-col items-center justify-center">
                 <span className="font-lilita text-[8px] md:text-[9px] uppercase tracking-wider text-black/50">ART</span>
                 <span className="font-lilita text-lg md:text-xl text-zap-cyan mt-0.5">{dynamicArt}</span>
               </div>
-            </div>
+            </div> */}
 
             {/* MY CREW Section */}
-            <div className="w-full max-w-sm select-none">
+            {/* <div className="w-full max-w-sm select-none">
               <div className="flex justify-between items-baseline mb-3">
                 <h3 className="font-lilita text-sm md:text-md uppercase tracking-wider">MY CREW</h3>
                 <span className="text-[10px] md:text-xs text-[#FF00E0] font-black underline cursor-pointer hover:text-purple-800">
@@ -253,7 +259,7 @@ export function ProfileView() {
                     </span>
                   </div>
                 ))}
-                {/* Invite Button */}
+              
                 <div className="flex flex-col items-center gap-1.5">
                   <button className="w-10 h-10 md:w-11 md:h-11 bg-white border-[3.5px] border-black rounded-full shadow-[2px_2px_0px_#000] flex items-center justify-center font-lilita text-lg cursor-pointer hover:translate-y-[0.5px]">
                     +
@@ -263,7 +269,7 @@ export function ProfileView() {
                   </span>
                 </div>
               </div>
-            </div>
+            </div> */}
 
           </div>
 

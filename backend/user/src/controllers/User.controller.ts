@@ -96,3 +96,17 @@ export const getAUser = TryCatch(async(req,res)=>{
     const user = await User.findById(req.params.id);
     res.json(user)
 })
+
+export const findOrCreateUser = TryCatch(async(req,res)=>{
+    const { email } = req.body;
+    if (!email) {
+        res.status(400).json({ message: "email is required" });
+        return;
+    }
+    let user = await User.findOne({ email });
+    if (!user) {
+        const name = email.split('@')[0] || "gamer";
+        user = await User.create({ name, email });
+    }
+    res.json(user);
+})

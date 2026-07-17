@@ -1,0 +1,46 @@
+import amqp from "amqplib";
+import type { Channel } from "amqplib";
+
+let connection: amqp.ChannelModel;
+export let channel: Channel;
+
+export const connectRabbitmq = async (): Promise<void> => {
+  try {
+    const rabbitmqUrl = process.env.RABBITMQ_URL || "amqp://admin:admin123@localhost:5672";
+    connection = await amqp.connect(rabbitmqUrl);
+
+    channel = await connection.createChannel();
+
+    console.log("✅ RabbitMQ connected successfully in Chat Service");
+  } catch (error) {
+    console.error("❌ RabbitMQ connection failed in Chat Service:", error);
+  }
+};
+
+export const closeRabbitmq = async (): Promise<void> => {
+  try {
+    await channel?.close();
+    await connection?.close();
+
+    console.log("✅ RabbitMQ connection closed in Chat Service");
+  } catch (error) {
+    console.error("❌ Error closing RabbitMQ in Chat Service:", error);
+  }
+};
+
+export const publishToQueue = async(queue:string, message:any) => {
+  try {
+    if (!channel){
+        console.log("No Channel Found in Chat Service");
+        return;
+    }
+    await channel?.assertQueue(queue,{
+        durable:true
+    });
+    await channel?.sendToQueue(queue, Buffer.from(JSON.stringify(message)),{
+        persistent:true
+    });
+  } catch (e : any) {
+    console.log("Failed to publish to queue:", e.message);
+  }
+};
