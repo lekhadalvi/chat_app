@@ -57,5 +57,37 @@ export const chatService = {
       throw new Error(data.message || "FAILED TO CREATE CHAT!");
     }
     return data;
+  },
+
+  async createGroupChat(token: string, groupName: string, userIds: string[]): Promise<any> {
+    const res = await fetch(`${CHAT_SERVICE_URL}/api/v1/chat/group`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ groupName, userIds })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || "FAILED TO CREATE GROUP CHAT!");
+    }
+    return data;
+  },
+
+  async inviteUserChat(token: string, query: string): Promise<any> {
+    const res = await fetch(`${CHAT_SERVICE_URL}/api/v1/chat/invite`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ query })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || "FAILED TO INVITE GAMER!");
+    }
+    return data;
   }
 };

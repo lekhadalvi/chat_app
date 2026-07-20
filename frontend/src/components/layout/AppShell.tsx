@@ -26,8 +26,28 @@ export function AppShell() {
     dbUsers,
     loadingUsers,
     sendMessage,
-    createChat
+    createChat,
+    createGroupChat,
+    inviteUserChat
   } = useChat();
+
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [selectedUserIds, setSelectedUserIds] = React.useState<string[]>([]);
+  const [groupNameInput, setGroupNameInput] = React.useState("");
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const filteredUsers = dbUsers.filter(
+    (u) =>
+      u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u._id.includes(searchQuery)
+  );
+
+  const toggleSelectUser = (id: string) => {
+    setSelectedUserIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
 
   const activeChat = chats.find((c) => c.id === activeChatId);
 
@@ -156,17 +176,47 @@ export function AppShell() {
               NEW CHAT SQUAD! ⚡
             </h3>
 
+            {/* Search Input Box */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search Gamer by ID or Email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-[#f8f7f3] border-2 border-black px-3 py-1.5 text-xs font-semibold placeholder-black/40 rounded-sm focus:outline-none shadow-[2px_2px_0px_#000]"
+              />
+            </div>
+
             {loadingUsers ? (
               <div className="py-4 text-center font-lilita text-xs animate-pulse text-black/50">
                 LOADING SQUADMATES...
               </div>
-            ) : dbUsers.length === 0 ? (
-              <div className="py-4 text-center font-lilita text-xs text-black/50">
-                NO REGISTERED GAMERS YET!
+            ) : filteredUsers.length === 0 ? (
+              <div className="py-4 flex flex-col items-center gap-2">
+                <div className="font-lilita text-xs text-black/50 text-center">
+                  {searchQuery ? "NO REGISTERED GAMER MATCHED!" : "NO REGISTERED GAMERS YET!"}
+                </div>
+                {searchQuery.trim() !== "" && (
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={async () => {
+                      setIsSubmitting(true);
+                      try {
+                        await inviteUserChat(searchQuery.trim());
+                      } finally {
+                        setIsSubmitting(false);
+                      }
+                    }}
+                    className="w-full py-2 bg-zap-yellow text-black border-2 border-black rounded-sm shadow-[2px_2px_0px_#000] font-lilita text-xs uppercase cursor-pointer hover:bg-amber-400 active:translate-y-[1px] active:shadow-none"
+                  >
+                    {isSubmitting ? "INVITING..." : `INVITE "${searchQuery.trim()}" VIA EMAIL ⚡`}
+                  </button>
+                )}
               </div>
             ) : (
-              <div className="flex flex-col gap-2.5 max-h-60 overflow-y-auto pr-1">
-                {dbUsers.map((u) => {
+              <div className="flex flex-col gap-2 max-h-52 overflow-y-auto pr-1">
+                {filteredUsers.map((u) => {
                   const colors = [
                     "var(--color-zap-purple)",
                     "var(--color-zap-pink)",
@@ -175,30 +225,83 @@ export function AppShell() {
                   ];
                   const codeSum = u.name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
                   const randomColor = colors[codeSum % colors.length];
-                  
+                  const isSelected = selectedUserIds.includes(u._id);
+
                   return (
-                    <button
+                    <div
                       key={u._id}
-                      onClick={() => createChat(u._id)}
-                      className="w-full text-left flex items-center gap-3 p-2 bg-white border-2 border-black rounded-sm shadow-[2px_2px_0px_#000] cursor-pointer hover:translate-x-[0.5px] hover:translate-y-[0.5px] hover:shadow-[1.5px_2px_0px_#000] active:translate-y-[1.5px] active:shadow-none transition-all"
+                      className={cn(
+                        "w-full flex items-center justify-between p-2 border-2 border-black rounded-sm shadow-[2px_2px_0px_#000] transition-all",
+                        isSelected ? "bg-amber-100 border-[#FF00E0]" : "bg-white"
+                      )}
                     >
-                      <div 
-                        className="w-8 h-8 rounded-full border-2 border-black flex items-center justify-center font-lilita text-xs uppercase"
-                        style={{ backgroundColor: randomColor }}
+                      <div className="flex items-center gap-2.5 flex-grow min-w-0">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelectUser(u._id)}
+                          className="w-4 h-4 accent-[#FF00E0] cursor-pointer"
+                        />
+                        <div 
+                          className="w-7 h-7 rounded-full border-2 border-black flex items-center justify-center font-lilita text-xs uppercase flex-shrink-0"
+                          style={{ backgroundColor: randomColor }}
+                        >
+                          {u.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-lilita text-xs uppercase tracking-wide text-black truncate leading-tight">
+                            {u.name}
+                          </span>
+                          <span className="text-[9px] text-black/50 font-bold truncate leading-none">
+                            {u.email}
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => createChat(u._id)}
+                        className="px-2 py-1 bg-zap-cyan text-black border-[1.5px] border-black rounded-sm font-lilita text-[9px] uppercase shadow-[1px_1px_0px_#000] hover:bg-cyan-300 ml-2 flex-shrink-0"
                       >
-                        {u.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-lilita text-xs uppercase tracking-wide text-black leading-tight">
-                          {u.name}
-                        </span>
-                        <span className="text-[9px] text-black/50 font-bold leading-none">
-                          {u.email}
-                        </span>
-                      </div>
-                    </button>
+                        CHAT
+                      </button>
+                    </div>
                   );
                 })}
+              </div>
+            )}
+
+            {/* Group Squad creation drawer if members checked */}
+            {selectedUserIds.length > 0 && (
+              <div className="flex flex-col gap-2 pt-2 border-t-2 border-black">
+                <input
+                  type="text"
+                  placeholder="Group Squad Name..."
+                  value={groupNameInput}
+                  onChange={(e) => setGroupNameInput(e.target.value)}
+                  className="w-full bg-[#f8f7f3] border-2 border-black px-3 py-1 text-xs font-semibold placeholder-black/40 rounded-sm focus:outline-none shadow-[2px_2px_0px_#000]"
+                />
+                <button
+                  type="button"
+                  disabled={isSubmitting}
+                  onClick={async () => {
+                    if (!groupNameInput.trim()) {
+                      alert("Please enter a Group Squad Name!");
+                      return;
+                    }
+                    setIsSubmitting(true);
+                    try {
+                      await createGroupChat(groupNameInput.trim(), selectedUserIds);
+                      setSelectedUserIds([]);
+                      setGroupNameInput("");
+                    } finally {
+                      setIsSubmitting(false);
+                    }
+                  }}
+                  className="w-full py-2 bg-[#FF00E0] text-white border-2 border-black rounded-sm shadow-[2px_2px_0px_#000] font-lilita text-xs uppercase cursor-pointer hover:bg-pink-600 active:translate-y-[1px] active:shadow-none"
+                >
+                  {isSubmitting ? "CREATING..." : `CREATE GROUP SQUAD (${selectedUserIds.length}) 🔥`}
+                </button>
               </div>
             )}
           </div>

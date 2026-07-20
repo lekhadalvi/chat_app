@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { authService } from "../../services/authService";
 
@@ -385,6 +386,15 @@ export default function LoginPage() {
             >
               SECURED WITH PASSWORDLESS MAGIC CODES ⚡
             </span>
+            <div className="flex items-center gap-3 mt-1 font-lilita text-[10px] uppercase text-black/70">
+              <Link href="/privacy" className="underline hover:text-black transition-colors">
+                PRIVACY POLICY
+              </Link>
+              <span>•</span>
+              <Link href="/terms" className="underline hover:text-black transition-colors">
+                TERMS & CONDITIONS
+              </Link>
+            </div>
           </div>
         </div>
       </div>

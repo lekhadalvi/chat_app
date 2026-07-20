@@ -18,7 +18,9 @@ export function useChat() {
     loadingUsers,
     fetchChatsList,
     sendMessage,
-    createChat
+    createChat,
+    createGroupChat,
+    inviteUserChat
   } = useApp();
 
   return {
@@ -38,6 +40,8 @@ export function useChat() {
     loadingUsers,
     fetchChatsList,
     sendMessage,
-    createChat
+    createChat,
+    createGroupChat,
+    inviteUserChat
   };
 }

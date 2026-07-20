@@ -82,14 +82,20 @@ function ChatsDashboard() {
       );
     };
 
+    const handleNewChat = () => {
+      fetchChatsList();
+    };
+
     socket.on("newMessage", handleNewMessage);
     socket.on("messagesSeen", handleMessagesSeen);
+    socket.on("newChat", handleNewChat);
 
     return () => {
       socket.off("newMessage", handleNewMessage);
       socket.off("messagesSeen", handleMessagesSeen);
+      socket.off("newChat", handleNewChat);
     };
-  }, [socket, setChats, activeChatId]);
+  }, [socket, setChats, activeChatId, fetchChatsList]);
   if (loading) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#f8f7f3] select-none">

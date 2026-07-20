@@ -30,6 +30,8 @@ interface AppContextType {
   fetchChatsList: () => Promise<void>;
   sendMessage: (chatId: string, content: string) => Promise<void>;
   createChat: (otherUserId: string) => Promise<void>;
+  createGroupChat: (groupName: string, userIds: string[]) => Promise<void>;
+  inviteUserChat: (query: string) => Promise<void>;
   updateName: (newName: string) => Promise<void>;
   logout: () => void;
 }
@@ -173,6 +175,42 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const createGroupChat = async (groupName: string, userIds: string[]) => {
+    const token = localStorage.getItem("zap_token");
+    if (!token) return;
+
+    try {
+      const newChat = await chatService.createGroupChat(token, groupName, userIds);
+      await fetchChatsList();
+      if (newChat.chat) {
+        setActiveChatId(newChat.chat);
+      }
+      setShowCreateChatModal(false);
+      setMobileView("chat");
+    } catch (err: any) {
+      console.error("Create group chat failed", err);
+      alert(err.message || "Failed to initialize group squad.");
+    }
+  };
+
+  const inviteUserChat = async (query: string) => {
+    const token = localStorage.getItem("zap_token");
+    if (!token) return;
+
+    try {
+      const newChat = await chatService.inviteUserChat(token, query);
+      await fetchChatsList();
+      if (newChat.chat) {
+        setActiveChatId(newChat.chat);
+      }
+      setShowCreateChatModal(false);
+      setMobileView("chat");
+    } catch (err: any) {
+      console.error("Invite user failed", err);
+      alert(err.message || "Failed to invite gamer.");
+    }
+  };
+
   // 5. Update Name
   const updateName = async (newName: string) => {
     const token = localStorage.getItem("zap_token");
@@ -289,6 +327,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         fetchChatsList,
         sendMessage,
         createChat,
+        createGroupChat,
+        inviteUserChat,
         updateName,
         logout
       }}
