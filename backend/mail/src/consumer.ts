@@ -21,11 +21,7 @@ export const sendOtpToConsumer = async (): Promise<Channel> => {
       return channel;
     }
 
-    const rabbitmqUrl = process.env.RABBITMQ_URL;
-
-    if (!rabbitmqUrl) {
-      throw new Error("RABBITMQ_URL is not defined");
-    }
+    const rabbitmqUrl = process.env.RABBITMQ_URL || process.env.RABBIT_MQ_URL || "amqp://localhost:5672";
 
     const connection = await amqp.connect(rabbitmqUrl);
 
@@ -42,29 +38,43 @@ export const sendOtpToConsumer = async (): Promise<Channel> => {
 
       try {
         const data = JSON.parse(msg.content.toString());
-
         const { email, otp } = data;
 
+        console.log(`[MAIL SERVICE] 📨 Sending OTP ${otp} to ${email}...`);
+
         await transporter.sendMail({
-          from: process.env.EMAIL_USER,
+          from: `"ZAP! Chat" <${process.env.EMAIL_USER}>`,
           to: email,
-          subject: "Your OTP Code",
+          subject: `⚡ Your ZAP! Verification Code: ${otp}`,
           html: `
-            <h2>OTP Verification</h2>
-            <p>Your OTP is:</p>
-            <h1>${otp}</h1>
+            <div style="font-family: 'Comic Sans MS', Arial, sans-serif; background-color: #FDFBF7; border: 4px solid #000; border-radius: 8px; padding: 24px; max-width: 480px; margin: 0 auto; box-shadow: 6px 6px 0px #000;">
+              <h1 style="color: #6C5CE7; font-size: 28px; margin-top: 0; text-transform: uppercase; letter-spacing: 1px;">
+                ⚡ ZAP! CHAT
+              </h1>
+              <p style="font-size: 16px; color: #111; font-weight: bold; margin-bottom: 8px;">
+                YO! Here is your verification code:
+              </p>
+              <div style="background-color: #FFE600; border: 3px solid #000; border-radius: 4px; padding: 14px 20px; text-align: center; margin: 18px 0; box-shadow: 4px 4px 0px #000;">
+                <span style="font-size: 36px; font-weight: 900; letter-spacing: 8px; color: #000;">${otp}</span>
+              </div>
+              <p style="font-size: 13px; color: #555; margin-top: 12px;">
+                This code is valid for <strong>5 minutes</strong>. Do not share this code with anyone!
+              </p>
+              <hr style="border: none; border-top: 2px dashed #000; margin: 20px 0;" />
+              <p style="font-size: 11px; color: #888; text-transform: uppercase; font-weight: bold;">
+                SECURED WITH PASSWORDLESS MAGIC CODES ⚡
+              </p>
+            </div>
           `,
         });
 
-        console.log(`OTP sent to ${email}`);
+        console.log(`[MAIL SERVICE] ✅ Successfully sent OTP to ${email}`);
 
         // Remove message from queue
         channel?.ack(msg);
       } catch (error) {
-        console.error("Failed to send OTP:", error);
-
-        // Requeue the message
-        channel?.nack(msg, false, true);
+        console.error("[MAIL SERVICE] ❌ Failed to send OTP:", error);
+        channel?.nack(msg, false, false);
       }
     });
 
