@@ -1,21 +1,23 @@
 
 import amqp from "amqplib";
 import type { Channel } from "amqplib";
+import dotenv from "dotenv";
 
-let connection: amqp.ChannelModel;
-export let channel: Channel;
+dotenv.config();
+
+let connection: amqp.ChannelModel | null = null;
+export let channel: Channel | null = null;
 
 export const connectRabbitmq = async (): Promise<void> => {
   try {
-    connection = await amqp.connect(
-      process.env.RABBIT_MQ_URL as string
-    );
+    const rabbitUrl = process.env.RABBITMQ_URL || process.env.RABBIT_MQ_URL || "amqp://admin:admin123@localhost:5672";
+    connection = await amqp.connect(rabbitUrl);
 
     channel = await connection.createChannel();
 
-    console.log("✅ RabbitMQ connected successfully");
-  } catch (error) {
-    console.error("❌ RabbitMQ connection failed:", error);
+    console.log("✅ RabbitMQ connected successfully in User Service");
+  } catch (error: any) {
+    console.error("❌ RabbitMQ connection failed in User Service:", error?.message || error);
   }
 };
 
@@ -29,20 +31,27 @@ export const closeRabbitmq = async (): Promise<void> => {
     console.error("❌ Error closing RabbitMQ:", error);
   }
 };
-export const publishToQueue = async(queue:string, message:any) => {
 
+export const publishToQueue = async (queue: string, message: any): Promise<boolean> => {
   try {
-    if 
-    (!channel){
-        console.log("No Channel Found")
+    if (!channel) {
+      console.warn(`⚠️ No RabbitMQ channel found for queue [${queue}], attempting reconnect...`);
+      await connectRabbitmq();
     }
-    const queueexsist = await channel?.assertQueue(queue,{
-        durable:true
-    })
-    const sendmessage = await channel?.sendToQueue(queue, Buffer.from(JSON.stringify(message)),{
-        persistent:true
-    })
-  } catch (e : any) {
-    console.log(e.message)
+    if (!channel) {
+      console.error(`❌ Unable to publish to queue [${queue}]: RabbitMQ channel is unavailable`);
+      return false;
+    }
+    await channel.assertQueue(queue, {
+      durable: true,
+    });
+    const sent = channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)), {
+      persistent: true,
+    });
+    console.log(`📤 [USER SERVICE] Published message to queue [${queue}]:`, message);
+    return sent;
+  } catch (e: any) {
+    console.error(`❌ [USER SERVICE] Error publishing to queue [${queue}]:`, e.message);
+    return false;
   }
-};
+};
