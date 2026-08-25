@@ -24,6 +24,14 @@ connectRabbitmq();
 
 app.use("/api/v1", UserRoutes);
 
+// Global JSON Error Handler
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error("Unhandled Error in User Service:", err.message || err);
+    res.status(err.status || 500).json({
+        message: err.message || "Internal Server Error"
+    });
+});
+
 app.listen(PORT, () => {
     console.log(`🚀 User Service running securely on http://localhost:${PORT}`);
 });

@@ -19,12 +19,20 @@ app.use(cors({
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
     credentials: true,
 }));
-app.use(express.json({ limit: "5mb" }));
+app.use(express.json({ limit: process.env.MAX_BODY_LIMIT || "5mb" }));
 
 connectDB();
 connectRabbitmq();
 
 app.use('/api/v1', chatRoutes);
+
+// Global JSON Error Handler
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error("Unhandled Error in Chat Service:", err.message || err);
+    res.status(err.status || 500).json({
+        message: err.message || "Internal Server Error"
+    });
+});
 
 server.listen(port, () => {
   console.log(`🚀 Chat & Socket Service running securely on port ${port}`);

@@ -19,8 +19,12 @@ export const LoginController = TryCatch(async (req, res) => {
     const rateLimitKey = `otp:rate:limit:${normalizedEmail}`;
     const rateLimit = await redisClient.get(rateLimitKey);
 
+    const otpRateLimitSecs = Number(process.env.OTP_RATE_LIMIT_SECONDS) || 60;
+    const otpExpirySecs = Number(process.env.OTP_EXPIRY_SECONDS) || 300;
+    const otpMaxAttempts = Number(process.env.OTP_MAX_ATTEMPTS) || 5;
+
     if (rateLimit) {
-        res.status(409).json({ message: "Too many requests. Please wait 1 minute before requesting another OTP." });
+        res.status(409).json({ message: `Too many requests. Please wait ${otpRateLimitSecs} seconds before requesting another OTP.` });
         return;
     }
 
@@ -29,9 +33,9 @@ export const LoginController = TryCatch(async (req, res) => {
     const otpkey = `otp:${normalizedEmail}`;
     const attemptKey = `otp:attempts:${normalizedEmail}`;
 
-    await redisClient.set(otpkey, otp, { EX: 300 });
+    await redisClient.set(otpkey, otp, { EX: otpExpirySecs });
     await redisClient.del(attemptKey);
-    await redisClient.set(rateLimitKey, "true", { EX: 60 });
+    await redisClient.set(rateLimitKey, "true", { EX: otpRateLimitSecs });
 
     if (process.env.NODE_ENV !== "production") {
         console.log(`[USER SERVICE] 🔑 Generated OTP for ${normalizedEmail}: ${otp}`);
@@ -63,6 +67,9 @@ export const VerifyController = TryCatch(async (req, res) => {
     const otpkey = `otp:${normalizedEmail}`;
     const attemptKey = `otp:attempts:${normalizedEmail}`;
 
+    const otpExpirySecs = Number(process.env.OTP_EXPIRY_SECONDS) || 300;
+    const otpMaxAttempts = Number(process.env.OTP_MAX_ATTEMPTS) || 5;
+
     const storedotp = await redisClient.get(otpkey);
 
     if (!storedotp) {
@@ -73,11 +80,11 @@ export const VerifyController = TryCatch(async (req, res) => {
     // Track failed verification attempts
     const attempts = await redisClient.incr(attemptKey);
     if (attempts === 1) {
-        await redisClient.expire(attemptKey, 300);
+        await redisClient.expire(attemptKey, otpExpirySecs);
     }
 
     // Lockout & eviction if attempts exceed threshold
-    if (attempts > 5) {
+    if (attempts > otpMaxAttempts) {
         await redisClient.del(otpkey);
         await redisClient.del(attemptKey);
         res.status(429).json({ message: "Too many failed attempts. This OTP has been invalidated." });
@@ -85,7 +92,7 @@ export const VerifyController = TryCatch(async (req, res) => {
     }
 
     if (storedotp !== cleanOtp) {
-        const remaining = 5 - attempts;
+        const remaining = otpMaxAttempts - attempts;
         res.status(400).json({ message: `Invalid OTP. ${remaining} attempt(s) remaining.` });
         return;
     }

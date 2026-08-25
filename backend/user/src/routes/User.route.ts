@@ -5,10 +5,13 @@ import { isAuth } from '../middlewares/auth.middleware.js';
 
 const Userrouter = express.Router();
 
-// Strict rate limiter for authentication endpoints (15 requests per 15 minutes per IP)
+const authWindowMs = Number(process.env.AUTH_RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000;
+const authMax = Number(process.env.AUTH_RATE_LIMIT_MAX) || 30;
+
+// Configurable rate limiter for authentication endpoints
 const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 15,
+    windowMs: authWindowMs,
+    max: authMax,
     message: { message: "Too many authentication attempts from this IP, please try again later." },
     standardHeaders: true,
     legacyHeaders: false,

@@ -6,10 +6,13 @@ import { upload } from '../middlewares/multer.js';
 
 const router = express.Router();
 
-// Message sending rate limiter (up to 60 messages per minute)
+const msgWindowMs = Number(process.env.MESSAGE_RATE_LIMIT_WINDOW_MS) || 60 * 1000;
+const msgMax = Number(process.env.MESSAGE_RATE_LIMIT_MAX) || 60;
+
+// Configurable message sending rate limiter
 const messageLimiter = rateLimit({
-    windowMs: 60 * 1000,
-    max: 60,
+    windowMs: msgWindowMs,
+    max: msgMax,
     message: { message: "Slow down! You are sending messages too fast." },
     standardHeaders: true,
     legacyHeaders: false,

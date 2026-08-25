@@ -9,9 +9,9 @@ export interface AuthenticatedRequest extends Request{
 
 export const isAuth = TryCatch(async(req: AuthenticatedRequest, res, next)=>{
 
-    const authHeader = req.headers.authorization
-    if (!authHeader ||!authHeader.startsWith("Bearer ")){
-        res.status(400).json({message:"please login "})
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        res.status(401).json({ message: "Please log in" });
         return; 
     }
 
