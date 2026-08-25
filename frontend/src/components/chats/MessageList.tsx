@@ -37,6 +37,20 @@ export function MessageList({ messages, currentUser, chatName, chatColor }: Mess
         const isMe = msg.senderId === currentUser.id;
         const isImage = msg.content.startsWith("IMAGE:");
         
+        let imageUrl = "";
+        let imageCaption = "LOOK AT THIS FRAME!!";
+
+        if (isImage) {
+          const rawContent = msg.content.replace("IMAGE:", "");
+          if (rawContent.includes("|CAPTION:")) {
+            const parts = rawContent.split("|CAPTION:");
+            imageUrl = parts[0];
+            imageCaption = parts[1] || "LOOK AT THIS FRAME!!";
+          } else {
+            imageUrl = rawContent;
+          }
+        }
+
         const sender = isMe 
           ? currentUser 
           : {
@@ -68,12 +82,13 @@ export function MessageList({ messages, currentUser, chatName, chatColor }: Mess
                 <div className={`flex flex-col gap-1 ${rotationClass}`}>
                   <div className="border-[3px] border-black p-3.5 pb-4 rounded-[14px] bg-white shadow-[4px_4px_0px_#000] max-w-[280px]">
                     <img
-                      src={msg.content.replace("IMAGE:", "")}
+                      src={imageUrl}
                       alt="shared screengrab"
-                      className="w-full h-auto object-cover border-[2.5px] border-black rounded-[8px]"
+                      className="w-full max-h-[300px] object-cover border-[2.5px] border-black rounded-[8px] bg-neutral-100"
+                      loading="lazy"
                     />
-                    <div className="mt-2.5 text-xs font-lilita uppercase tracking-wider text-black px-0.5">
-                      LOOK AT THIS FRAME!!
+                    <div className="mt-2.5 text-xs font-lilita uppercase tracking-wider text-black px-0.5 break-words">
+                      {imageCaption}
                     </div>
                   </div>
                   <span className={`block text-[9px] font-bold text-black/50 mt-1.5 ${isMe ? "text-right" : "text-left"}`}>

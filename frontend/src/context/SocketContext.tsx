@@ -26,14 +26,17 @@ export const SocketProvider = ({ children }: ProviderProps) => {
   useEffect(() => {
     if (!user.id) return;
 
+    const token = typeof window !== "undefined" ? localStorage.getItem("zap_token") : null;
+
     // Connect to the Chat Service socket.io server on port 5002
-    const chatServiceUrl = process.env.NEXT_PUBLIC_CHAT_SERVICE_URL 
+    const chatServiceUrl = process.env.NEXT_PUBLIC_CHAT_SERVICE_URL || "http://localhost:5002";
     const newSocket = io(chatServiceUrl, {
+      auth: { token },
       query: { userId: user.id },
     });
 
     setSocket(newSocket);
-newSocket.on("getOnlineUsers", (users: string[]) => {
+    newSocket.on("getOnlineUsers", (users: string[]) => {
       setOnlineUsers(users);
     });
     return () => {

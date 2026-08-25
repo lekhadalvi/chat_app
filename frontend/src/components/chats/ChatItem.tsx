@@ -13,7 +13,8 @@ interface ChatItemProps {
 export function ChatItem({ chat, isActive, onClick }: ChatItemProps) {
   const { onlineUsers } = useSocket();
   const lastMsg = chat.messages[chat.messages.length - 1];
-  const lastText = chat.lastMessage || (lastMsg ? lastMsg.content : "No messages yet.");
+  const rawLastText = chat.lastMessage || (lastMsg ? lastMsg.content : "No messages yet.");
+  const lastText = rawLastText.startsWith("IMAGE:") ? "📸 Polaroid Photo" : rawLastText;
   const displayTime = chat.lastMessageTime || (lastMsg ? lastMsg.timestamp : "");
   
   const isOnline = chat.otherUserId ? onlineUsers?.includes(chat.otherUserId) : false;

@@ -24,7 +24,6 @@ interface AuthFormInput {
 
 export default function LoginPage() {
   const router = useRouter();
-  const [isSignUp, setIsSignUp] = useState(false);
   const [step, setStep] = useState<"email" | "otp">("email");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -109,11 +108,7 @@ export default function LoginPage() {
       setLoading(true);
       try {
         const resData = await authService.verify(data.email, data.otp);
-        setSuccess(
-          isSignUp 
-            ? "HELL YEAH! SIGNED UP SUCCESSFULLY! WELCOME!" 
-            : "HELL YEAH! LOGGED IN SUCCESSFULLY!"
-        );
+        setSuccess("HELL YEAH! YOU'RE IN! WELCOME TO ZAP! ⚡");
         
         const user = resData.user;
         // Store backend info in local storage
@@ -200,7 +195,7 @@ export default function LoginPage() {
       </div>
 
       {/* Header Title Section */}
-      <div className="flex flex-col items-center  mb-4 select-none relative z-10">
+      <div className="flex flex-col items-center mb-4 select-none relative z-10">
         <div className="relative flex flex-col md:flex-row items-center gap-2 md:gap-4">
           <div className="relative">
             {/* Back Magenta Slanted Title */}
@@ -250,9 +245,14 @@ export default function LoginPage() {
                 <path strokeLinecap="round" d="M3 8a3 3 0 0 1 1-2.5M2.5 12.5a4 4 0 0 1 1.5-3M21 7.5a3 3 0 0 0-1-2" />
               </svg>
             </div>
-            <h2 className="font-lilita text-2xl md:text-3xl tracking-wide uppercase">
-              {isSignUp ? "YO! SIGN UP" : "YO! SIGN IN"}
-            </h2>
+            <div>
+              <h2 className="font-lilita text-2xl md:text-3xl tracking-wide uppercase">
+                ENTER THE SQUAD
+              </h2>
+              <p className="text-[11px] font-bold text-black/60 uppercase tracking-wider">
+                Sign In or Sign Up with One Click
+              </p>
+            </div>
           </div>
 
           {/* Form Actions */}
@@ -274,7 +274,7 @@ export default function LoginPage() {
             {step === "email" ? (
               <div className="flex flex-col gap-1.5 animate-in fade-in duration-200">
                 <label className="font-lilita text-xs tracking-wider uppercase text-black/70">
-                  EMAIL ADDRESS
+                  YOUR EMAIL ADDRESS
                 </label>
                 <div className="relative">
                   <input
@@ -308,7 +308,7 @@ export default function LoginPage() {
               <div className="flex flex-col gap-1.5 animate-in fade-in duration-200">
                 <div className="flex justify-between items-center">
                   <label className="font-lilita text-xs tracking-wider uppercase text-black/70">
-                    ENTER OTP CODE
+                    ENTER 6-DIGIT OTP
                   </label>
                   <button
                     type="button"
@@ -326,11 +326,12 @@ export default function LoginPage() {
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="12345"
+                    placeholder="123456"
+                    maxLength={6}
                     {...register("otp", {
                       required: "WHOA! OTP CANNOT BE BLANK!"
                     })}
-                    className="w-full bg-white text-black font-semibold placeholder-black/40 border-[3px] border-black px-4 py-3 pr-11 rounded-sm shadow-[4px_4px_0px_rgba(0,0,0,1)] focus:outline-none focus:bg-amber-50 focus:translate-x-[1px] focus:translate-y-[1px] focus:shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all"
+                    className="w-full bg-white text-black font-semibold placeholder-black/40 border-[3px] border-black px-4 py-3 pr-11 rounded-sm shadow-[4px_4px_0px_rgba(0,0,0,1)] focus:outline-none focus:bg-amber-50 focus:translate-x-[1px] focus:translate-y-[1px] focus:shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all tracking-widest text-center text-lg"
                   />
                   <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-black/50 pointer-events-none w-5 h-5">
                     <svg
@@ -360,29 +361,14 @@ export default function LoginPage() {
             >
               {loading 
                 ? (step === "email" ? "SENDING CODE..." : "VERIFYING...") 
-                : (step === "email" ? "GET OTP!" : "LET ME IN!")}
+                : (step === "email" ? "GET OTP CODE ⚡" : "LET ME IN ⚡")}
             </button>
           </form>
 
           {/* Form Footer Links */}
           <div className="flex flex-col items-center gap-2.5 mt-6 pt-4 border-t-[2.5px] border-black select-none text-center">
-            <span className="font-semibold text-xs tracking-wider">
-              {isSignUp ? "Already a member? " : "New here? "}
-              <span
-                onClick={() => {
-                  setIsSignUp(!isSignUp);
-                  setStep("email");
-                  resetField("otp");
-                  setError("");
-                  setSuccess("");
-                }}
-                className="text-zap-purple underline font-black cursor-pointer hover:text-purple-800 transition-colors"
-              >
-                {isSignUp ? "SIGN IN" : "JOIN THE SQUAD"}
-              </span>
-            </span>
             <span
-              className="text-[10px] md:text-xs font-black tracking-widest text-black/60 cursor-default"
+              className="text-[10px] md:text-xs font-black tracking-widest text-black/70 cursor-default uppercase"
             >
               SECURED WITH PASSWORDLESS MAGIC CODES ⚡
             </span>

@@ -166,7 +166,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       const newChat = await chatService.createChat(token, otherUserId);
       await fetchChatsList();
-      setActiveChatId(newChat._id);
+      const chatId = newChat?.chat || newChat?._id;
+      if (chatId) {
+        setActiveChatId(chatId);
+      }
       setShowCreateChatModal(false);
       setMobileView("chat");
     } catch (err) {
@@ -266,7 +269,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       try {
         const token = localStorage.getItem("zap_token");
         if (!token) return;
-        const dbMessages = await chatService.fetchMessages(token, activeChatId);
+        const resData: any = await chatService.fetchMessages(token, activeChatId);
+        const dbMessages: any[] = Array.isArray(resData) ? resData : (resData?.messages || []);
         
         const mappedMessages = dbMessages.map((msg: any) => {
           const timeStr = msg.createdAt
