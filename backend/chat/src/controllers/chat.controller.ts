@@ -101,7 +101,8 @@ export const fetchAllChats = TryCatch<AuthenticatedRequest>(async (req, res) => 
 
 export const sendMessage = TryCatch(async(req:AuthenticatedRequest,res) =>{
     const senderId = req.user?._id
-    const {chatId ,text} = req.body
+    const { chatId } = req.body
+    const text = req.body.text || req.body.content
     const imageFile = req.file
 
     if(!senderId){
@@ -131,16 +132,6 @@ export const sendMessage = TryCatch(async(req:AuthenticatedRequest,res) =>{
     return
    }
 
-   const otherUserId = chat.users.find(userId => userId.toString() !== senderId.toString());
-   if(!otherUserId){
-    res.status(400).json({message:"cannot send message to yourself"})
-    return
-   }
-
-   // socket setup
-
-   
-
    const messageData: any = {
     chatId,
     sender: senderId,
@@ -164,7 +155,6 @@ export const sendMessage = TryCatch(async(req:AuthenticatedRequest,res) =>{
    }
 
    const message = new Message(messageData)
- 
 
    const savedMessage = await message.save()
 
@@ -177,19 +167,28 @@ export const sendMessage = TryCatch(async(req:AuthenticatedRequest,res) =>{
     updatedAt: new Date(),
    },{new:true})
 
-    // Emit socket event to notify the other user about the new message
-    const otherUserSocketId = UserSocketMap[otherUserId.toString()];
-    if (otherUserSocketId) {
-        io.to(otherUserSocketId).emit("newMessage", {
-            chatId,
-            message: {
-                id: savedMessage._id,
-                senderId: savedMessage.sender,
-                content: savedMessage.text,
-                timestamp: new Date(savedMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    const messagePayload = {
+        chatId,
+        message: {
+            id: savedMessage._id,
+            senderId: savedMessage.sender,
+            content: savedMessage.text,
+            timestamp: new Date(savedMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+    };
+
+    // Emit to room (for users currently inside the chat)
+    io.to(chatId).emit("newMessage", messagePayload);
+
+    // Emit to individual user sockets (for users in dashboard/chats list)
+    chat.users.forEach((memberId) => {
+        if (memberId.toString() !== senderId.toString()) {
+            const socketId = UserSocketMap[memberId.toString()];
+            if (socketId) {
+                io.to(socketId).emit("newMessage", messagePayload);
             }
-        });
-    }
+        }
+    });
     
     res.status(201).json({ message: savedMessage, sender: senderId })
 })

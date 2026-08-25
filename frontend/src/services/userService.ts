@@ -29,7 +29,7 @@ export const userService = {
 
   async updateUsername(token: string, newName: string): Promise<{ message: string }> {
     const res = await fetch(`${USER_SERVICE_URL}/api/v1/updatename`, {
-      method: "GET", // Backend expects GET for updatename
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`

@@ -14,7 +14,7 @@ export const chatService = {
     return data;
   },
 
-  async fetchMessages(token: string, chatId: string): Promise<any[]> {
+  async fetchMessages(token: string, chatId: string): Promise<any> {
     const res = await fetch(`${CHAT_SERVICE_URL}/api/v1/chat/message/${chatId}`, {
       headers: {
         "Authorization": `Bearer ${token}`
@@ -34,7 +34,7 @@ export const chatService = {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`
       },
-      body: JSON.stringify({ chatId, content })
+      body: JSON.stringify({ chatId, text: content })
     });
     const data = await res.json();
     if (!res.ok) {
