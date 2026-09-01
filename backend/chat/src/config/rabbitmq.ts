@@ -1,12 +1,27 @@
 import amqp from "amqplib";
 import type { Channel } from "amqplib";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 let connection: amqp.ChannelModel;
 export let channel: Channel;
 
+const getRabbitmqUrl = (): string => {
+  if (process.env.RABBITMQ_URL || process.env.RABBIT_MQ_URL) {
+    return (process.env.RABBITMQ_URL || process.env.RABBIT_MQ_URL)!;
+  }
+  const user = process.env.RABBITMQ_USER || "";
+  const password = process.env.RABBITMQ_PASSWORD || "";
+  const host = process.env.RABBITMQ_HOST || "";
+  const port = process.env.RABBITMQ_PORT;
+  const formattedHost = host.includes(":") || !port ? host : `${host}:${port}`;
+  return `amqp://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${formattedHost}`;
+};
+
 export const connectRabbitmq = async (): Promise<void> => {
   try {
-    const rabbitmqUrl = process.env.RABBITMQ_URL || "amqp://admin:admin123@localhost:5672";
+    const rabbitmqUrl = getRabbitmqUrl();
     connection = await amqp.connect(rabbitmqUrl);
 
     channel = await connection.createChannel();

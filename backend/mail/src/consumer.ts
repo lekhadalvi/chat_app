@@ -15,13 +15,25 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const getRabbitmqUrl = (): string => {
+  if (process.env.RABBITMQ_URL || process.env.RABBIT_MQ_URL) {
+    return (process.env.RABBITMQ_URL || process.env.RABBIT_MQ_URL)!;
+  }
+  const user = process.env.RABBITMQ_USER || "";
+  const password = process.env.RABBITMQ_PASSWORD || "";
+  const host = process.env.RABBITMQ_HOST || "";
+  const port = process.env.RABBITMQ_PORT;
+  const formattedHost = host.includes(":") || !port ? host : `${host}:${port}`;
+  return `amqp://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${formattedHost}`;
+};
+
 export const sendOtpToConsumer = async (): Promise<Channel> => {
   try {
     if (channel) {
       return channel;
     }
 
-    const rabbitmqUrl = process.env.RABBITMQ_URL || process.env.RABBIT_MQ_URL || "amqp://localhost:5672";
+    const rabbitmqUrl = getRabbitmqUrl();
 
     const connection = await amqp.connect(rabbitmqUrl);
 
