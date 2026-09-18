@@ -328,20 +328,33 @@ export const inviteUserChat = TryCatch<AuthenticatedRequest>(async (req, res) =>
     let invitedUser: any = null;
 
     try {
-        if (query.includes("@")) {
-            const token = req.headers.authorization;
-            const { data } = await axios.post(
-                `${process.env.USER_SERVICE_URL}/api/v1/user/find-or-create`,
-                { email: query },
-                { headers: { Authorization: token } }
-            );
-            invitedUser = data;
-        } else {
-            const { data } = await axios.get(
-                `${process.env.USER_SERVICE_URL}/api/v1/user/${query}`
-            );
-            invitedUser = data;
+    if (query.includes("@")) {
+        const token = req.headers.authorization;
+
+        if (!token) {
+            return res.status(401).json({
+                message: "Authorization token is missing",
+            });
         }
+
+        const { data } = await axios.post(
+            `${process.env.USER_SERVICE_URL}/api/v1/user/find-or-create`,
+            { email: query },
+            {
+                headers: {
+                    Authorization: token,
+                },
+            }
+        );
+
+        invitedUser = data;
+    } else {
+        const { data } = await axios.get(
+            `${process.env.USER_SERVICE_URL}/api/v1/user/${query}`
+        );
+
+        invitedUser = data;
+    }
     } catch (err: any) {
         console.error("Failed to query user service:", err.message);
         res.status(404).json({ message: "invited user not found" });
