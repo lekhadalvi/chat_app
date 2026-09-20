@@ -29,7 +29,7 @@ export const SocketProvider = ({ children }: ProviderProps) => {
     const token = typeof window !== "undefined" ? localStorage.getItem("zap_token") : null;
 
     // Connect to the Chat Service socket.io server on port 5002
-    const chatServiceUrl = process.env.NEXT_PUBLIC_CHAT_SERVICE_URL || "http://localhost:5002";
+    const chatServiceUrl = process.env.NEXT_PUBLIC_CHAT_SERVICE_URL ;
     const newSocket = io(chatServiceUrl, {
       auth: { token },
       query: { userId: user.id },

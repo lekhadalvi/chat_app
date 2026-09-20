@@ -21,8 +21,8 @@ async function handleProxy(req: NextRequest, paramsPromise: Promise<{ path: stri
   const pathStr = path.join("/");
   
   // Route dynamically to the correct backend microservice URL from environment variables
-  const userServiceUrl = process.env.NEXT_PUBLIC_USER_SERVICE_URL || "http://localhost:5000";
-  const chatServiceUrl = process.env.NEXT_PUBLIC_CHAT_SERVICE_URL || "http://localhost:5002";
+  const userServiceUrl = process.env.NEXT_PUBLIC_USER_SERVICE_URL 
+  const chatServiceUrl = process.env.NEXT_PUBLIC_CHAT_SERVICE_URL 
   
   const baseServiceUrl = path[0] === "chat" ? chatServiceUrl : userServiceUrl;
   const targetUrl = `${baseServiceUrl}/api/v1/${pathStr}${req.nextUrl.search}`;
