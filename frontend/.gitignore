@@ -1,7 +1,6 @@
 # dependencies
 node_modules/
-*package.json
-*package-lock.json
+
 
 
 # env
@@ -21,10 +20,5 @@ npm-debug.log*
 .DS_Store
 .vscode/
 
-.next/
-next-env.d.ts
-next.config.mjs
-postcss.config.mjs
-tsconfig.json
-tsconfig.tsbuildinfo
+
 *.pem
