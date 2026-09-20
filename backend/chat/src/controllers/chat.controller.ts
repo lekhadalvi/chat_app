@@ -48,14 +48,19 @@ export const fetchAllChats = TryCatch<AuthenticatedRequest>(async (req, res) => 
         return;
     }
 
-    const chats = await Chat.find({ users: userId }).sort({ updatedAt: -1 });
+    const userIdStr = userId.toString();
+    const chats = await Chat.find({
+        users: { $in: [userIdStr, userId] }
+    }).sort({ updatedAt: -1 });
+
+    const token = req.headers.authorization;
 
     const chatwithUserData = await Promise.all(
         chats.map(async (chat) => {
             const unseenCount = await Message.countDocuments({
                 chatId: chat._id,
                 seen: false,
-                sender: { $ne: userId }
+                sender: { $ne: userIdStr }
             });
 
             const chatData = {
@@ -73,11 +78,11 @@ export const fetchAllChats = TryCatch<AuthenticatedRequest>(async (req, res) => 
                 return { user: groupUser, chat: chatData };
             }
 
-            const otherUserId = chat.users.find((id) => id.toString() !== userId);
+            const otherUserId = chat.users.find((id) => id.toString() !== userIdStr);
             const unknownUser = {
-                _id: otherUserId,
-                name: "Unknown user name",
-                email: "Unknown user email",
+                _id: otherUserId || "",
+                name: "Unknown Gamer",
+                email: "",
             };
 
             if (!otherUserId) {
@@ -86,7 +91,8 @@ export const fetchAllChats = TryCatch<AuthenticatedRequest>(async (req, res) => 
 
             try {
                 const { data } = await axios.get<IUser>(
-                    `${process.env.USER_SERVICE_URL}/api/v1/user/${otherUserId}`
+                    `${process.env.USER_SERVICE_URL}/api/v1/user/${otherUserId}`,
+                    token ? { headers: { Authorization: token } } : undefined
                 );
                 return { user: data, chat: chatData };
             } catch (error) {
@@ -242,8 +248,10 @@ export const getMessageByChat = TryCatch<AuthenticatedRequest>(async (req, res) 
     }
 
     try {
+        const token = req.headers.authorization;
         const { data } = await axios.get<IUser>(
-            `${process.env.USER_SERVICE_URL}/api/v1/user/${otherUserId}`
+            `${process.env.USER_SERVICE_URL}/api/v1/user/${otherUserId}`,
+            token ? { headers: { Authorization: token } } : undefined
         );
         res.json({ messages, otherUser: data });
     } catch (error) {
@@ -252,8 +260,8 @@ export const getMessageByChat = TryCatch<AuthenticatedRequest>(async (req, res) 
             messages,
             otherUser: {
                 _id: otherUserId,
-                name: "Unknown user name",
-                email: "Unknown user email",
+                name: "Unknown Gamer",
+                email: "",
             }
         });
     }
@@ -292,8 +300,10 @@ export const createGroupChat = TryCatch<AuthenticatedRequest>(async (req, res) =
     for (const memberId of userIds) {
         if (memberId.toString() === userId.toString()) continue;
         try {
+            const token = req.headers.authorization;
             const { data: memberUser } = await axios.get<IUser>(
-                `${process.env.USER_SERVICE_URL}/api/v1/user/${memberId}`
+                `${process.env.USER_SERVICE_URL}/api/v1/user/${memberId}`,
+                token ? { headers: { Authorization: token } } : undefined
             );
             if (memberUser && memberUser.email) {
                 await publishToQueue("send-invite", {
@@ -320,62 +330,55 @@ export const inviteUserChat = TryCatch<AuthenticatedRequest>(async (req, res) =>
         return;
     }
 
-    if (!query) {
-        res.status(400).json({ message: "search query (id or email) is required" });
+    if (!query || typeof query !== "string" || !query.trim()) {
+        res.status(400).json({ message: "Search query (id or email) is required" });
         return;
     }
 
+    const cleanQuery = query.trim();
     let invitedUser: any = null;
+    const token = req.headers.authorization;
 
     try {
-    if (query.includes("@")) {
-        const token = req.headers.authorization;
-
-        if (!token) {
-            return res.status(401).json({
-                message: "Authorization token is missing",
-            });
+        if (cleanQuery.includes("@")) {
+            const normalizedEmail = cleanQuery.toLowerCase();
+            const { data } = await axios.post(
+                `${process.env.USER_SERVICE_URL}/api/v1/user/find-or-create`,
+                { email: normalizedEmail },
+                {
+                    headers: token ? { Authorization: token } : {},
+                }
+            );
+            invitedUser = data;
+        } else {
+            const { data } = await axios.get(
+                `${process.env.USER_SERVICE_URL}/api/v1/user/${cleanQuery}`,
+                token ? { headers: { Authorization: token } } : undefined
+            );
+            invitedUser = data;
         }
-
-        const { data } = await axios.post(
-            `${process.env.USER_SERVICE_URL}/api/v1/user/find-or-create`,
-            { email: query },
-            {
-                headers: {
-                    Authorization: token,
-                },
-            }
-        );
-
-        invitedUser = data;
-    } else {
-        const { data } = await axios.get(
-            `${process.env.USER_SERVICE_URL}/api/v1/user/${query}`
-        );
-
-        invitedUser = data;
-    }
     } catch (err: any) {
-        console.error("Failed to query user service:", err.message);
-        res.status(404).json({ message: "invited user not found" });
+        console.error("Failed to query user service in inviteUserChat:", err.message);
+        res.status(404).json({ message: "Invited gamer not found. Please enter a valid email address." });
         return;
     }
 
-    if (!invitedUser) {
-        res.status(404).json({ message: "invited user not found" });
+    if (!invitedUser || !invitedUser._id) {
+        res.status(404).json({ message: "Invited gamer not found. Please enter a valid email address." });
         return;
     }
 
+    const userIdStr = userId.toString();
     const otherUserId = invitedUser._id.toString();
 
-    if (otherUserId === userId.toString()) {
-        res.status(400).json({ message: "cannot create a chat with yourself" });
+    if (otherUserId === userIdStr) {
+        res.status(400).json({ message: "Cannot create a chat with yourself" });
         return;
     }
 
     const existingChat = await Chat.findOne({
         isGroup: false,
-        users: { $all: [userId, otherUserId], $size: 2 },
+        users: { $all: [userIdStr, otherUserId], $size: 2 },
     });
 
     if (existingChat) {
@@ -384,9 +387,25 @@ export const inviteUserChat = TryCatch<AuthenticatedRequest>(async (req, res) =>
     }
 
     const newChat = await Chat.create({
-        users: [userId, otherUserId],
+        users: [userIdStr, otherUserId],
         isGroup: false,
     });
+
+    const senderName = req.user?.name || "A gamer";
+
+    // Create an initial invitation greeting message so the chat isn't blank
+    const initialMessage = await Message.create({
+        chatId: newChat._id,
+        sender: userIdStr,
+        text: `⚡ Hey! I invited you to chat on ZAP!`,
+        seen: false,
+    });
+
+    newChat.latestMessage = {
+        text: initialMessage.text || "⚡ Hey! I invited you to chat on ZAP!",
+        sender: userIdStr,
+    };
+    await newChat.save();
 
     const socketId = UserSocketMap[otherUserId];
     if (socketId) {
@@ -394,7 +413,7 @@ export const inviteUserChat = TryCatch<AuthenticatedRequest>(async (req, res) =>
     }
 
     await publishToQueue("send-invite", {
-        senderName: req.user?.name || "A gamer",
+        senderName,
         invitedEmail: invitedUser.email,
         invitedName: invitedUser.name,
         chatName: ""

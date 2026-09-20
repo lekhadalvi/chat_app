@@ -93,8 +93,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const resData = await chatService.fetchChats(token);
       const dbChats = resData.chats || [];
       const mapped = dbChats.map((item: any) => {
-        const lastMsgText = item.chat.latestMessage ? item.chat.latestMessage.text : "";
-        const timeStr = item.chat.updatedAt 
+        const lastMsgText = item.chat?.latestMessage ? item.chat.latestMessage.text : "";
+        const timeStr = item.chat?.updatedAt 
           ? new Date(item.chat.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           : "Now";
 
@@ -104,19 +104,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           "var(--color-zap-cyan)",
           "var(--color-zap-yellow)"
         ];
-        const nameSum = item.user.name.split("").reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
+        const rawName = item.user?.name || item.user?.email?.split("@")[0] || "Gamer";
+        const nameSum = rawName.split("").reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
         const avatarColor = colors[nameSum % colors.length];
 
         return {
-          id: item.chat._id,
-          name: item.user.name,
+          id: item.chat?._id,
+          name: rawName,
           avatarColor,
-          isGroup: false,
+          isGroup: item.chat?.isGroup || false,
           lastMessage: lastMsgText,
           lastMessageTime: timeStr,
-          unreadCount: item.chat.unseenCount,
+          unreadCount: item.chat?.unseenCount || 0,
           messages: [],
-          otherUserId: item.user._id
+          otherUserId: item.user?._id
         };
       });
       setChats(mapped);

@@ -21,7 +21,7 @@ Userrouter.post("/login", authLimiter, LoginController);
 Userrouter.post("/verify", authLimiter, VerifyController);
 Userrouter.get("/me", isAuth, myProfile);
 Userrouter.get("/users/all", isAuth, getAllUsers);
-Userrouter.get("/user/:id", isAuth, getAUser);
+Userrouter.get("/user/:id", getAUser);
 Userrouter.put("/updatename", isAuth, updateName);
 Userrouter.post("/updatename", isAuth, updateName);
 Userrouter.post("/user/find-or-create", isAuth, findOrCreateUser);
