@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { AppProvider } from "../../context/AppContext";
-import { SocketProvider, useSocket } from "../../context/SocketContext";
+import { useSocket } from "../../context/SocketContext";
 import { AppShell } from "../../components/layout/AppShell";
 import { useAuth } from "../../hooks/useAuth";
 import { useChat } from "../../hooks/useChat";
@@ -117,13 +116,28 @@ function ChatsDashboard() {
   }, [socket, setChats, activeChatId, fetchChatsList]);
   if (loading) {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#f8f7f3] select-none">
-        <div className="w-16 h-20 text-zap-purple animate-bounce mb-4">
-          <svg viewBox="0 0 100 100" className="w-full h-full filter drop-shadow-[2px_2px_0px_#000]" fill="currentColor" stroke="black" strokeWidth="4">
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#f8f7f3] select-none p-4">
+        <div 
+          className="animate-bounce mb-4 flex items-center justify-center"
+          style={{ width: "64px", height: "80px", maxWidth: "64px", maxHeight: "80px" }}
+        >
+          <svg 
+            viewBox="0 0 100 100" 
+            width="64"
+            height="80"
+            style={{ width: "64px", height: "80px", display: "block" }}
+            className="filter drop-shadow-[2px_2px_0px_#000]" 
+            fill="#B500B5" 
+            stroke="black" 
+            strokeWidth="4"
+          >
             <polygon points="60,5 20,55 50,55 40,95 80,45 50,45" />
           </svg>
         </div>
-        <h2 className="font-lilita text-xl uppercase tracking-wider text-black animate-pulse">
+        <h2 
+          className="font-lilita text-xl uppercase tracking-wider text-black animate-pulse text-center"
+          style={{ fontFamily: 'var(--font-lilita-one), "Arial Black", sans-serif' }}
+        >
           CONNECTING TO SQUAD...
         </h2>
       </div>
@@ -140,11 +154,5 @@ function ChatsDashboard() {
 }
 
 export default function ChatsPage() {
-  return (
-    <AppProvider>
-      <SocketProvider>
-        <ChatsDashboard />
-      </SocketProvider>
-    </AppProvider>
-  );
+  return <ChatsDashboard />;
 }

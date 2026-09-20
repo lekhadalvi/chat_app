@@ -40,12 +40,43 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [user, setUser] = useState<User>({
-    id: "",
-    name: "",
-    email: "",
-    avatarColor: "var(--color-zap-purple)",
-    isOnline: true
+  const [user, setUser] = useState<User>(() => {
+    if (typeof window !== "undefined") {
+      const savedUser = localStorage.getItem("zap_user");
+      if (savedUser) {
+        try {
+          const parsed = JSON.parse(savedUser);
+          if (parsed?.id || parsed?._id) {
+            return {
+              id: parsed.id || parsed._id,
+              name: parsed.name || "Gamer",
+              email: parsed.email || "",
+              avatarColor: "var(--color-zap-purple)",
+              isOnline: true
+            };
+          }
+        } catch {}
+      }
+      const token = localStorage.getItem("zap_token");
+      const name = localStorage.getItem("zap_user_name");
+      const id = localStorage.getItem("zap_user_id");
+      if (token && (name || id)) {
+        return {
+          id: id || "",
+          name: name || "Gamer",
+          email: localStorage.getItem("zap_user_email") || "",
+          avatarColor: "var(--color-zap-purple)",
+          isOnline: true
+        };
+      }
+    }
+    return {
+      id: "",
+      name: "",
+      email: "",
+      avatarColor: "var(--color-zap-purple)",
+      isOnline: true
+    };
   });
   const [chats, setChats] = useState<Chat[]>([]);
   const [activeChatId, setActiveChatId] = useState<string>("");
@@ -55,7 +86,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [showCreateChatModal, setShowCreateChatModal] = useState(false);
   const [dbUsers, setDbUsers] = useState<{ _id: string; name: string; email: string }[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("zap_token");
+      const userStr = localStorage.getItem("zap_user");
+      const userId = localStorage.getItem("zap_user_id");
+      if (token && (userStr || userId)) {
+        return false;
+      }
+    }
+    return true;
+  });
 
   // 1. Logout Handler
   const logout = useCallback(() => {
@@ -68,12 +109,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
     setChats([]);
     setActiveChatId("");
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("zap_token");
+      localStorage.removeItem("zap_user_name");
+      localStorage.removeItem("zap_user_id");
+      localStorage.removeItem("zap_user_email");
+      localStorage.removeItem("zap_user");
+      localStorage.removeItem("zap_authenticated");
+      localStorage.removeItem("zap_login_time");
+      localStorage.removeItem("zap_pending_chat");
+    }
     authService.logout();
   }, []);
 
   // 2. Verify Authentication, Profile, & Check 1-day Expiry
   const verifyAuth = useCallback(async () => {
-    const token = localStorage.getItem("zap_token");
+    const token = typeof window !== "undefined" ? localStorage.getItem("zap_token") : null;
     const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
     const isExpired = (): boolean => {
@@ -88,7 +139,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
         const parts = token.split(".");
         if (parts.length === 3) {
-          const payload = JSON.parse(atob(parts[1]));
+          // Normalize base64url to base64
+          let base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+          while (base64.length % 4) {
+            base64 += "=";
+          }
+          const payload = JSON.parse(atob(base64));
           if (payload.exp && payload.exp * 1000 <= Date.now()) {
             return true;
           }
@@ -110,16 +166,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (!localStorage.getItem("zap_login_time")) {
         localStorage.setItem("zap_login_time", Date.now().toString());
       }
-      setUser({
+      const verifiedUser: User = {
         id: data._id,
         name: data.name,
         email: data.email || "",
         avatarColor: "var(--color-zap-purple)",
         isOnline: true
-      });
-    } catch (err) {
-      console.error("Auth check failed", err);
-      logout();
+      };
+      setUser(verifiedUser);
+      localStorage.setItem("zap_user", JSON.stringify(verifiedUser));
+      localStorage.setItem("zap_user_id", data._id);
+      localStorage.setItem("zap_user_name", data.name);
+      if (data.email) {
+        localStorage.setItem("zap_user_email", data.email);
+      }
+    } catch (err: any) {
+      console.warn("Auth check warning:", err?.message || err);
+      // Only force logout if specifically unauthorized or token invalid
+      const errMsg = (err?.message || "").toLowerCase();
+      if (errMsg.includes("unauthorized") || errMsg.includes("invalid") || errMsg.includes("jwt")) {
+        logout();
+      }
+      // If it's a transient network timeout but we already have local credentials, keep session
     } finally {
       setLoading(false);
     }

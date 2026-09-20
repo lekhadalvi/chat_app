@@ -44,6 +44,7 @@ async function handleProxy(req: NextRequest, paramsPromise: Promise<{ path: stri
       headers,
       body,
       cache: "no-store",
+      signal: AbortSignal.timeout(10000),
     });
 
     const resBody = await backendRes.text();

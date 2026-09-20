@@ -70,6 +70,9 @@ export default function LoginPage() {
         // Session expired after 1 day -> clear credentials
         localStorage.removeItem("zap_token");
         localStorage.removeItem("zap_user_name");
+        localStorage.removeItem("zap_user_id");
+        localStorage.removeItem("zap_user_email");
+        localStorage.removeItem("zap_user");
         localStorage.removeItem("zap_authenticated");
         localStorage.removeItem("zap_login_time");
         localStorage.removeItem("zap_pending_chat");
@@ -154,30 +157,44 @@ export default function LoginPage() {
         setSuccess("HELL YEAH! YOU'RE IN! WELCOME TO ZAP! ⚡");
         
         const user = resData.user;
-        const finalToken = resData.token;
+        let finalToken = resData.token;
         let finalName = user.name || data.email.slice(0, 8);
 
         // If in signup mode and custom name was entered, update the username
         if (authMode === "signup" && data.name && data.name.trim()) {
           try {
-            await userService.updateUsername(finalToken, data.name.trim());
+            const updateRes = await userService.updateUsername(finalToken, data.name.trim());
             finalName = data.name.trim();
+            if (updateRes?.token) {
+              finalToken = updateRes.token;
+            }
           } catch (nameErr) {
             console.warn("Could not save custom name on signup:", nameErr);
           }
         }
 
-        // Store backend info in local storage
+        // Store full user info in local storage for instant dashboard loading
+        const userId = user._id || "";
+        const userEmail = user.email || data.email;
         localStorage.setItem("zap_user_name", finalName);
+        localStorage.setItem("zap_user_id", userId);
+        localStorage.setItem("zap_user_email", userEmail);
+        localStorage.setItem("zap_user", JSON.stringify({
+          id: userId,
+          name: finalName,
+          email: userEmail,
+          avatarColor: "var(--color-zap-purple)",
+          isOnline: true
+        }));
         localStorage.setItem("zap_authenticated", "true");
         localStorage.setItem("zap_token", finalToken);
         localStorage.setItem("zap_login_time", Date.now().toString());
 
         const pendingChat = localStorage.getItem("zap_pending_chat");
-        // Redirect to chats dashboard after 800ms
+        // Redirect to chats dashboard after 500ms
         setTimeout(() => {
           router.push(pendingChat ? `/chats?chatId=${pendingChat}` : "/chats");
-        }, 800);
+        }, 500);
       } catch (err: any) {
         setError(err.message || "COULD NOT VERIFY THE OTP!");
       } finally {
