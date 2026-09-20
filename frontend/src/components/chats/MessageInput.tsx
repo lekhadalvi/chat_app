@@ -194,33 +194,8 @@ export function MessageInput({ onSendMessage, onTyping, onStopTyping }: MessageI
 
   const emojiList = ["😱", "✨", "🌈", "🤘", "🔥", "😹", "👽", "💀", "💥", "🛸", "💬", "❤️", "👑", "🍕", "👾"];
 
-  const mockImages = [
-    {
-      label: "🌆 TOKYO NEON",
-      url: "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f?w=600&auto=format&fit=crop",
-    },
-    {
-      label: "🔮 CRYSTALS",
-      url: "https://images.unsplash.com/photo-1599707367072-cd6ada2bc375?w=600&auto=format&fit=crop",
-    },
-    {
-      label: "👟 WINGED SHOE",
-      url: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop",
-    },
-    {
-      label: "🌌 NEBULA DRIFT",
-      url: "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?w=600&auto=format&fit=crop",
-    },
-  ];
-
   const handleSelectEmoji = (emoji: string) => {
     setText((prev) => prev + emoji);
-  };
-
-  const handleSelectMockImage = (imageUrl: string, label: string) => {
-    setPreviewImage(imageUrl);
-    setImageCaption(label.replace(/^[^\s]+\s*/, ""));
-    setShowAttachmentMenu(false);
   };
 
   return (
@@ -304,28 +279,6 @@ export function MessageInput({ onSendMessage, onTyping, onStopTyping }: MessageI
               </svg>
               <span>📸 TAKE PHOTO</span>
             </button>
-
-            {/* Preset Samples Header */}
-            <div className="border-t-[1.5px] border-black/20 pt-1 mt-0.5">
-              <span className="text-[9px] font-lilita uppercase tracking-wider text-black/50 px-1">
-                SAMPLE POLAROIDS
-              </span>
-            </div>
-
-            {/* Mock Image Presets */}
-            <div className="flex flex-col gap-1 max-h-36 overflow-y-auto">
-              {mockImages.map((img) => (
-                <button
-                  key={img.label}
-                  type="button"
-                  onClick={() => handleSelectMockImage(img.url, img.label)}
-                  className="w-full text-left px-2 py-1 border border-transparent hover:border-black hover:bg-[#F8F7F3] rounded font-lilita text-[10px] uppercase transition-all cursor-pointer flex items-center justify-between"
-                >
-                  <span>{img.label}</span>
-                  <span className="text-black/40 text-[9px]">→</span>
-                </button>
-              ))}
-            </div>
           </div>
         </>
       )}
