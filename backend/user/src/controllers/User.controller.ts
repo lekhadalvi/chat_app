@@ -179,3 +179,29 @@ export const findOrCreateUser = TryCatch(async (req, res) => {
     }
     res.json(user);
 });
+
+export const healthCheck = TryCatch(async (req, res) => {
+    res.status(200).json({
+        status: "ok",
+        service: "user-service",
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString(),
+    });
+});
+
+export const cronDbData = TryCatch(async (req, res) => {
+    const totalUsers = await User.estimatedDocumentCount();
+    const sampleData = await User.find({}, "_id name email createdAt")
+        .sort({ updatedAt: -1 })
+        .limit(5)
+        .lean();
+
+    res.status(200).json({
+        status: "ok",
+        message: "Database ping and data fetch successful for cron job",
+        database: "MongoDB Connected",
+        totalUsers,
+        sampleData,
+        timestamp: new Date().toISOString(),
+    });
+});

@@ -24,6 +24,10 @@ app.use(express.json({ limit: process.env.MAX_BODY_LIMIT || "5mb" }));
 connectDB();
 connectRabbitmq();
 
+app.get("/health", (req, res) => {
+    res.status(200).json({ status: "ok", service: "chat-service", timestamp: new Date().toISOString() });
+});
+
 app.use('/api/v1', chatRoutes);
 
 // Global JSON Error Handler

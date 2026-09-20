@@ -1,10 +1,14 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import { isAuth } from '../middlewares/isAuth.js';
-import { createNewChat, fetchAllChats, getMessageByChat, sendMessage, createGroupChat, inviteUserChat } from '../controllers/chat.controller.js';
+import { createNewChat, fetchAllChats, getMessageByChat, sendMessage, createGroupChat, inviteUserChat, chatHealthCheck, chatCronDbData } from '../controllers/chat.controller.js';
 import { upload } from '../middlewares/multer.js';
 
 const router = express.Router();
+
+// Dedicated Health and DB Query APIs for Cron Jobs (Not used anywhere else)
+router.get('/chat/health', chatHealthCheck);
+router.get('/chat/cron/db-data', chatCronDbData);
 
 const msgWindowMs = Number(process.env.MESSAGE_RATE_LIMIT_WINDOW_MS) || 60 * 1000;
 const msgMax = Number(process.env.MESSAGE_RATE_LIMIT_MAX) || 60;

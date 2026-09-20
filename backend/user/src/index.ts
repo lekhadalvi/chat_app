@@ -22,6 +22,10 @@ connectDB();
 connectRedis();
 connectRabbitmq();
 
+app.get("/health", (req, res) => {
+    res.status(200).json({ status: "ok", service: "user-service", timestamp: new Date().toISOString() });
+});
+
 app.use("/api/v1", UserRoutes);
 
 // Global JSON Error Handler

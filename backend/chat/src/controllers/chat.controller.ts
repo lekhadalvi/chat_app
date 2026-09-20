@@ -432,3 +432,31 @@ export const inviteUserChat = TryCatch<AuthenticatedRequest>(async (req, res) =>
 
     res.status(201).json({ message: "chat created and user invited", chat: newChat._id });
 });
+
+export const chatHealthCheck = TryCatch(async (req, res) => {
+    res.status(200).json({
+        status: "ok",
+        service: "chat-service",
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString(),
+    });
+});
+
+export const chatCronDbData = TryCatch(async (req, res) => {
+    const totalChats = await Chat.estimatedDocumentCount();
+    const totalMessages = await Message.estimatedDocumentCount();
+    const sampleChats = await Chat.find({}, "_id isGroup updatedAt")
+        .sort({ updatedAt: -1 })
+        .limit(3)
+        .lean();
+
+    res.status(200).json({
+        status: "ok",
+        message: "Chat database query successful for cron job",
+        database: "MongoDB Connected",
+        totalChats,
+        totalMessages,
+        sampleChats,
+        timestamp: new Date().toISOString(),
+    });
+});

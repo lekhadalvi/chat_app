@@ -1,9 +1,13 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
-import { getAllUsers, getAUser, LoginController, myProfile, updateName, VerifyController, findOrCreateUser } from '../controllers/User.controller.js';
+import { getAllUsers, getAUser, LoginController, myProfile, updateName, VerifyController, findOrCreateUser, healthCheck, cronDbData } from '../controllers/User.controller.js';
 import { isAuth } from '../middlewares/auth.middleware.js';
 
 const Userrouter = express.Router();
+
+// Dedicated Health and DB Query APIs for Cron Jobs (Not used anywhere else)
+Userrouter.get("/health", healthCheck);
+Userrouter.get("/cron/db-data", cronDbData);
 
 const authWindowMs = Number(process.env.AUTH_RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000;
 const authMax = Number(process.env.AUTH_RATE_LIMIT_MAX) || 30;
