@@ -14,6 +14,7 @@ function ChatsDashboard() {
     setChats,
     activeChatId, 
     setActiveChatId, 
+    setMobileView,
     fetchChatsList, 
     sendMessage, 
     createChat 
@@ -31,6 +32,24 @@ function ChatsDashboard() {
       fetchChatsList();
     }
   }, [user.id, fetchChatsList]);
+
+  // Auto-select chat from URL parameter ?chatId= or localStorage pending invite
+  useEffect(() => {
+    if (chats.length > 0) {
+      const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+      const targetChatId = params?.get("chatId") || (typeof window !== "undefined" ? localStorage.getItem("zap_pending_chat") : null);
+      if (targetChatId && activeChatId !== targetChatId) {
+        const found = chats.find((c) => c.id === targetChatId);
+        if (found) {
+          setActiveChatId(targetChatId);
+          setMobileView("chat");
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("zap_pending_chat");
+          }
+        }
+      }
+    }
+  }, [chats, activeChatId, setActiveChatId, setMobileView]);
 
   // Join/leave chat rooms for real-time messaging
   useEffect(() => {

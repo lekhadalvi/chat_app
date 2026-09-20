@@ -100,25 +100,52 @@ export const sendOtpToConsumer = async (): Promise<Channel> => {
 
       try {
         const data = JSON.parse(msg.content.toString());
-        const { senderName, invitedEmail, invitedName, chatName } = data;
+        const { senderName, invitedEmail, invitedName, chatName, chatId } = data;
 
         const titleText = chatName ? `Group Squad "${chatName}"` : "a conversation squad";
 
+        const frontendUrl = (
+          process.env.FRONTEND_URL ||
+          process.env.APP_URL ||
+          (process.env.RABBITMQ_HOST && process.env.RABBITMQ_HOST !== "localhost" && process.env.RABBITMQ_HOST !== "127.0.0.1"
+            ? `http://${process.env.RABBITMQ_HOST}:3000`
+            : "http://localhost:3000")
+        ).replace(/\/$/, "");
+
+        const chatLink = `${frontendUrl}/login?email=${encodeURIComponent(invitedEmail || "")}${chatId ? `&chatId=${encodeURIComponent(chatId)}` : ""}`;
+
         await transporter.sendMail({
-          from: process.env.EMAIL_USER,
+          from: `"ZAP! Chat" <${process.env.EMAIL_USER}>`,
           to: invitedEmail,
-          subject: `⚡ You've been invited to chat on ZAP!`,
+          subject: `⚡ ${senderName || "A friend"} invited you to chat on ZAP!`,
           html: `
-            <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f8f7f3; border: 3px solid #000; border-radius: 10px;">
-              <h2 style="color: #000; text-transform: uppercase;">ZAP! Chat Invite ⚡</h2>
-              <p style="font-size: 16px; color: #333;">
+            <div style="font-family: 'Comic Sans MS', Arial, sans-serif; background-color: #FDFBF7; border: 4px solid #000; border-radius: 8px; padding: 24px; max-width: 500px; margin: 0 auto; box-shadow: 6px 6px 0px #000;">
+              <h1 style="color: #6C5CE7; font-size: 26px; margin-top: 0; text-transform: uppercase; letter-spacing: 1px;">
+                ⚡ ZAP! CHAT INVITE
+              </h1>
+              <p style="font-size: 16px; color: #111; font-weight: bold; margin-bottom: 8px;">
                 Hey <strong>${invitedName || invitedEmail}</strong>!
               </p>
-              <p style="font-size: 14px; color: #555;">
-                <strong>${senderName}</strong> has invited you to join ${titleText} on <strong>ZAP!</strong>
+              <p style="font-size: 15px; color: #333; line-height: 1.5; margin-bottom: 20px;">
+                <strong>${senderName || "A gamer"}</strong> has invited you to join ${titleText} on <strong>ZAP!</strong>
               </p>
-              <p style="margin-top: 20px;">
-                Log into your account to jump straight into the conversation!
+              
+              <div style="text-align: center; margin: 26px 0;">
+                <a href="${chatLink}" 
+                   style="background-color: #FFE600; color: #000000; display: inline-block; padding: 14px 28px; font-size: 16px; font-weight: 900; text-decoration: none; text-transform: uppercase; letter-spacing: 1px; border: 3px solid #000000; border-radius: 4px; box-shadow: 4px 4px 0px #000000;"
+                   target="_blank">
+                  ⚡ START CHATTING ON ZAP! ⚡
+                </a>
+              </div>
+
+              <p style="font-size: 13px; color: #555; margin-top: 18px; line-height: 1.4;">
+                Click the button above or use this link to jump straight into the conversation:<br/>
+                <a href="${chatLink}" style="color: #6C5CE7; font-weight: bold; word-break: break-all;">${chatLink}</a>
+              </p>
+
+              <hr style="border: none; border-top: 2px dashed #000; margin: 20px 0;" />
+              <p style="font-size: 11px; color: #888; text-transform: uppercase; font-weight: bold; margin: 0;">
+                ZAP! CHAT • INSTANT & PASSWORDLESS
               </p>
             </div>
           `,

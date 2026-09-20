@@ -310,7 +310,8 @@ export const createGroupChat = TryCatch<AuthenticatedRequest>(async (req, res) =
                     senderName: creatorName,
                     invitedEmail: memberUser.email,
                     invitedName: memberUser.name,
-                    chatName: groupName
+                    chatName: groupName,
+                    chatId: newChat._id.toString()
                 });
             }
         } catch (e) {
@@ -381,7 +382,18 @@ export const inviteUserChat = TryCatch<AuthenticatedRequest>(async (req, res) =>
         users: { $all: [userIdStr, otherUserId], $size: 2 },
     });
 
+    const senderName = req.user?.name || "A gamer";
+
     if (existingChat) {
+        if (invitedUser.email) {
+            await publishToQueue("send-invite", {
+                senderName,
+                invitedEmail: invitedUser.email,
+                invitedName: invitedUser.name,
+                chatName: "",
+                chatId: existingChat._id.toString()
+            });
+        }
         res.status(200).json({ message: "chat already exists", chat: existingChat._id });
         return;
     }
@@ -390,8 +402,6 @@ export const inviteUserChat = TryCatch<AuthenticatedRequest>(async (req, res) =>
         users: [userIdStr, otherUserId],
         isGroup: false,
     });
-
-    const senderName = req.user?.name || "A gamer";
 
     // Create an initial invitation greeting message so the chat isn't blank
     const initialMessage = await Message.create({
@@ -416,7 +426,8 @@ export const inviteUserChat = TryCatch<AuthenticatedRequest>(async (req, res) =>
         senderName,
         invitedEmail: invitedUser.email,
         invitedName: invitedUser.name,
-        chatName: ""
+        chatName: "",
+        chatId: newChat._id.toString()
     });
 
     res.status(201).json({ message: "chat created and user invited", chat: newChat._id });

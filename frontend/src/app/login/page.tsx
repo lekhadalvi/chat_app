@@ -30,7 +30,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [particles, setParticles] = useState<HeartParticle[]>([]);
 
-  const { register, handleSubmit, formState: { errors }, watch, resetField } = useForm<AuthFormInput>({
+  const { register, handleSubmit, formState: { errors }, watch, resetField, setValue } = useForm<AuthFormInput>({
     defaultValues: {
       email: "",
       otp: ""
@@ -40,6 +40,28 @@ export default function LoginPage() {
   const emailValue = watch("email");
   
   const formRef = useRef<HTMLDivElement>(null);
+
+  // Auto-fill email or redirect to chat if already logged in / invite link clicked
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const emailParam = params.get("email");
+    const chatIdParam = params.get("chatId");
+
+    if (chatIdParam) {
+      localStorage.setItem("zap_pending_chat", chatIdParam);
+    }
+
+    const token = localStorage.getItem("zap_token");
+    if (token) {
+      router.push(chatIdParam ? `/chats?chatId=${chatIdParam}` : "/chats");
+      return;
+    }
+
+    if (emailParam) {
+      setValue("email", emailParam);
+    }
+  }, [router, setValue]);
 
   // Clean up expired click particles
   useEffect(() => {
@@ -116,9 +138,10 @@ export default function LoginPage() {
         localStorage.setItem("zap_authenticated", "true");
         localStorage.setItem("zap_token", resData.token);
 
+        const pendingChat = localStorage.getItem("zap_pending_chat");
         // Redirect to chats dashboard after 800ms
         setTimeout(() => {
-          router.push("/chats");
+          router.push(pendingChat ? `/chats?chatId=${pendingChat}` : "/chats");
         }, 800);
       } catch (err: any) {
         setError(err.message || "COULD NOT VERIFY THE OTP!");
