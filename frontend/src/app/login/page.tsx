@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { authService } from "../../services/authService";
+import { userService } from "../../services/userService";
 
 interface HeartParticle {
   id: number;
@@ -18,12 +19,14 @@ interface HeartParticle {
 }
 
 interface AuthFormInput {
+  name?: string;
   email: string;
   otp: string;
 }
 
 export default function LoginPage() {
   const router = useRouter();
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [step, setStep] = useState<"email" | "otp">("email");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -32,6 +35,7 @@ export default function LoginPage() {
 
   const { register, handleSubmit, formState: { errors }, watch, resetField, setValue } = useForm<AuthFormInput>({
     defaultValues: {
+      name: "",
       email: "",
       otp: ""
     }
@@ -41,12 +45,17 @@ export default function LoginPage() {
   
   const formRef = useRef<HTMLDivElement>(null);
 
-  // Auto-fill email or redirect to chat if already logged in / invite link clicked
+  // Auto-fill email, check mode, or redirect to chat if already logged in / invite link clicked
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     const emailParam = params.get("email");
     const chatIdParam = params.get("chatId");
+    const modeParam = params.get("mode");
+
+    if (modeParam === "signup" || modeParam === "signin") {
+      setAuthMode(modeParam);
+    }
 
     if (chatIdParam) {
       localStorage.setItem("zap_pending_chat", chatIdParam);
@@ -133,10 +142,23 @@ export default function LoginPage() {
         setSuccess("HELL YEAH! YOU'RE IN! WELCOME TO ZAP! ⚡");
         
         const user = resData.user;
+        const finalToken = resData.token;
+        let finalName = user.name || data.email.slice(0, 8);
+
+        // If in signup mode and custom name was entered, update the username
+        if (authMode === "signup" && data.name && data.name.trim()) {
+          try {
+            await userService.updateUsername(finalToken, data.name.trim());
+            finalName = data.name.trim();
+          } catch (nameErr) {
+            console.warn("Could not save custom name on signup:", nameErr);
+          }
+        }
+
         // Store backend info in local storage
-        localStorage.setItem("zap_user_name", user.name || data.email.slice(0, 8));
+        localStorage.setItem("zap_user_name", finalName);
         localStorage.setItem("zap_authenticated", "true");
-        localStorage.setItem("zap_token", resData.token);
+        localStorage.setItem("zap_token", finalToken);
 
         const pendingChat = localStorage.getItem("zap_pending_chat");
         // Redirect to chats dashboard after 800ms
@@ -254,34 +276,79 @@ export default function LoginPage() {
         
         {/* Foreground Active Card */}
         <div className="relative bg-white rounded-sm border-[3.5px] border-black transform -rotate-[0.5deg] p-6 md:p-8 flex flex-col">
-          {/* Card Header with Waving Hand Icon */}
-          <div className="flex items-center gap-2 mb-6 border-b-[3px] border-black pb-4 select-none">
-            {/* Yo! Hand Emoji / Comic Icon */}
+          {/* Segmented Auth Mode Toggle (Sign In vs Sign Up) */}
+          <div className="grid grid-cols-2 gap-2 mb-6 p-1 bg-[#f1efe7] border-[3px] border-black rounded-sm shadow-[3px_3px_0px_rgba(0,0,0,1)] select-none">
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode("signin");
+                setStep("email");
+                setError("");
+                setSuccess("");
+              }}
+              className={`py-2 px-2 text-center font-lilita text-sm md:text-base uppercase tracking-wider transition-all border-[2.5px] rounded-sm cursor-pointer ${
+                authMode === "signin"
+                  ? "bg-zap-yellow text-black border-black shadow-[3px_3px_0px_#000] -translate-x-[1px] -translate-y-[1px]"
+                  : "bg-transparent text-black/60 border-transparent hover:text-black hover:bg-black/5"
+              }`}
+            >
+              ⚡ SIGN IN
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode("signup");
+                setStep("email");
+                setError("");
+                setSuccess("");
+              }}
+              className={`py-2 px-2 text-center font-lilita text-sm md:text-base uppercase tracking-wider transition-all border-[2.5px] rounded-sm cursor-pointer ${
+                authMode === "signup"
+                  ? "bg-zap-pink text-black border-black shadow-[3px_3px_0px_#000] -translate-x-[1px] -translate-y-[1px]"
+                  : "bg-transparent text-black/60 border-transparent hover:text-black hover:bg-black/5"
+              }`}
+            >
+              ✨ SIGN UP
+            </button>
+          </div>
+
+          {/* Card Header with Adaptive Icon */}
+          <div className="flex items-center gap-2.5 mb-6 border-b-[3px] border-black pb-4 select-none">
             <div className="w-9 h-9 text-black relative flex-shrink-0 animate-bounce">
-              <svg viewBox="0 0 24 24" className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="#FFE082"
-                  d="M14.5 13.5V6.5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v5m-3-1v-4c0-.83-.67-1.5-1.5-1.5S7 5.17 7 6v8.5c0 2.21 1.79 4 4 4h3.5c1.93 0 3.5-1.57 3.5-3.5v-2c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.5"
-                />
-                <path strokeLinecap="round" d="M3 8a3 3 0 0 1 1-2.5M2.5 12.5a4 4 0 0 1 1.5-3M21 7.5a3 3 0 0 0-1-2" />
-              </svg>
+              {authMode === "signin" ? (
+                <svg viewBox="0 0 24 24" className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="#FFE082"
+                    d="M14.5 13.5V6.5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v5m-3-1v-4c0-.83-.67-1.5-1.5-1.5S7 5.17 7 6v8.5c0 2.21 1.79 4 4 4h3.5c1.93 0 3.5-1.57 3.5-3.5v-2c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.5"
+                  />
+                  <path strokeLinecap="round" d="M3 8a3 3 0 0 1 1-2.5M2.5 12.5a4 4 0 0 1 1.5-3M21 7.5a3 3 0 0 0-1-2" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" className="w-full h-full text-zap-pink" fill="currentColor" stroke="black" strokeWidth="2">
+                  <polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9" />
+                </svg>
+              )}
             </div>
             <div>
               <h2 className="font-lilita text-2xl md:text-3xl tracking-wide uppercase">
-                ENTER THE SQUAD
+                {authMode === "signin" ? "SIGN IN SQUAD" : "JOIN THE SQUAD"}
               </h2>
               <p className="text-[11px] font-bold text-black/60 uppercase tracking-wider">
-                Sign In or Sign Up with One Click
+                {authMode === "signin"
+                  ? "Welcome back! Enter your email to log in"
+                  : "Create your gamer tag & start chatting"}
               </p>
             </div>
           </div>
 
           {/* Form Actions */}
           <form onSubmit={handleSubmit(handleLoginSubmit)} className="flex flex-col gap-5">
-            {(errors.email || errors.otp || error) && (
+            {(errors.name || errors.email || errors.otp || error) && (
               <div className="bg-[#FF5E5E] border-[3px] border-black p-3 text-white font-lilita text-sm tracking-wide shadow-[3px_3px_0px_#000] animate-pulse flex flex-col gap-1 select-none">
+                {errors.name && <span>{errors.name.message}</span>}
                 {errors.email && <span>{errors.email.message}</span>}
                 {errors.otp && <span>{errors.otp.message}</span>}
                 {error && <span>{error}</span>}
@@ -295,35 +362,67 @@ export default function LoginPage() {
 
             {/* Email / OTP Input Group */}
             {step === "email" ? (
-              <div className="flex flex-col gap-1.5 animate-in fade-in duration-200">
-                <label className="font-lilita text-xs tracking-wider uppercase text-black/70">
-                  YOUR EMAIL ADDRESS
-                </label>
-                <div className="relative">
-                  <input
-                    type="email"
-                    placeholder="gamer@zaptalk.com"
-                    {...register("email", {
-                      required: "WHOA! EMAIL CANNOT BE BLANK!",
-                      pattern: {
-                        value: /\S+@\S+\.\S+/,
-                        message: "OOPS! THAT DOESN'T LOOK LIKE A VALID EMAIL!"
-                      }
-                    })}
-                    className="w-full bg-white text-black font-semibold placeholder-black/40 border-[3px] border-black px-4 py-3 pr-11 rounded-sm shadow-[4px_4px_0px_rgba(0,0,0,1)] focus:outline-none focus:bg-amber-50 focus:translate-x-[1px] focus:translate-y-[1px] focus:shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all"
-                  />
-                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-black/50 pointer-events-none w-5 h-5">
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                      <polyline points="22,6 12,13 2,6" />
-                    </svg>
+              <div className="flex flex-col gap-3.5 animate-in fade-in duration-200">
+                {authMode === "signup" && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="font-lilita text-xs tracking-wider uppercase text-black/70">
+                      YOUR GAMER TAG / NAME
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="e.g. CyberViper or Alex"
+                        maxLength={30}
+                        {...register("name", {
+                          validate: (val) => {
+                            if (authMode === "signup" && (!val || val.trim().length < 2)) {
+                              return "WHOA! GAMER TAG MUST BE AT LEAST 2 CHARACTERS!";
+                            }
+                            return true;
+                          }
+                        })}
+                        className="w-full bg-white text-black font-semibold placeholder-black/40 border-[3px] border-black px-4 py-3 pr-11 rounded-sm shadow-[4px_4px_0px_rgba(0,0,0,1)] focus:outline-none focus:bg-pink-50 focus:translate-x-[1px] focus:translate-y-[1px] focus:shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all"
+                      />
+                      <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-black/50 pointer-events-none w-5 h-5">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                          <circle cx="12" cy="7" r="4" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-lilita text-xs tracking-wider uppercase text-black/70">
+                    YOUR EMAIL ADDRESS
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      placeholder="gamer@zaptalk.com"
+                      {...register("email", {
+                        required: "WHOA! EMAIL CANNOT BE BLANK!",
+                        pattern: {
+                          value: /\S+@\S+\.\S+/,
+                          message: "OOPS! THAT DOESN'T LOOK LIKE A VALID EMAIL!"
+                        }
+                      })}
+                      className="w-full bg-white text-black font-semibold placeholder-black/40 border-[3px] border-black px-4 py-3 pr-11 rounded-sm shadow-[4px_4px_0px_rgba(0,0,0,1)] focus:outline-none focus:bg-amber-50 focus:translate-x-[1px] focus:translate-y-[1px] focus:shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all"
+                    />
+                    <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-black/50 pointer-events-none w-5 h-5">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                        <polyline points="22,6 12,13 2,6" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -341,9 +440,9 @@ export default function LoginPage() {
                       setError("");
                       setSuccess("");
                     }}
-                    className="text-xs text-zap-purple underline font-black hover:text-purple-800"
+                    className="text-xs text-zap-purple underline font-black hover:text-purple-800 cursor-pointer"
                   >
-                    CHANGE EMAIL
+                    CHANGE DETAILS
                   </button>
                 </div>
                 <div className="relative">
@@ -380,12 +479,54 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-zap-purple text-white font-lilita text-xl py-3.5 uppercase border-[3.5px] border-black rounded-sm shadow-[5px_5px_0px_rgba(0,0,0,1)] cursor-pointer select-none hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all disabled:bg-purple-900/50 disabled:cursor-not-allowed"
+              className={`w-full text-white font-lilita text-xl py-3.5 uppercase border-[3.5px] border-black rounded-sm shadow-[5px_5px_0px_rgba(0,0,0,1)] cursor-pointer select-none hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-60 disabled:cursor-not-allowed ${
+                authMode === "signup" ? "bg-zap-pink hover:bg-pink-600" : "bg-zap-purple hover:bg-purple-700"
+              }`}
             >
               {loading 
                 ? (step === "email" ? "SENDING CODE..." : "VERIFYING...") 
-                : (step === "email" ? "GET OTP CODE ⚡" : "LET ME IN ⚡")}
+                : (step === "email" 
+                    ? (authMode === "signin" ? "GET SIGN IN OTP ⚡" : "GET SIGN UP OTP 🚀")
+                    : (authMode === "signin" ? "SIGN IN TO SQUAD ⚡" : "JOIN & ENTER SQUAD 🚀")
+                  )}
             </button>
+
+            {/* Switch Mode Helper Link */}
+            <div className="text-center pt-1">
+              {authMode === "signin" ? (
+                <p className="text-xs font-bold text-black/70">
+                  New to ZAP?{" "}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode("signup");
+                      setStep("email");
+                      setError("");
+                      setSuccess("");
+                    }}
+                    className="text-zap-purple font-lilita uppercase underline hover:text-black tracking-wide ml-1 cursor-pointer"
+                  >
+                    Switch to Sign Up ✨
+                  </button>
+                </p>
+              ) : (
+                <p className="text-xs font-bold text-black/70">
+                  Already have an account?{" "}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode("signin");
+                      setStep("email");
+                      setError("");
+                      setSuccess("");
+                    }}
+                    className="text-zap-purple font-lilita uppercase underline hover:text-black tracking-wide ml-1 cursor-pointer"
+                  >
+                    Switch to Sign In ⚡
+                  </button>
+                </p>
+              )}
+            </div>
           </form>
 
           {/* Form Footer Links */}
