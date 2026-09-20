@@ -23,6 +23,7 @@ Userrouter.get("/me", isAuth, myProfile);
 Userrouter.get("/users/all", isAuth, getAllUsers);
 Userrouter.get("/user/:id", isAuth, getAUser);
 Userrouter.put("/updatename", isAuth, updateName);
+Userrouter.post("/updatename", isAuth, updateName);
 Userrouter.post("/user/find-or-create", isAuth, findOrCreateUser);
 
 export default Userrouter;

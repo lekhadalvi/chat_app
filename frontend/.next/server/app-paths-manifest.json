@@ -1,6 +1,10 @@
 {
-  "/favicon.ico/route": "app/favicon.ico/route.js",
   "/api/v1/[...path]/route": "app/api/v1/[...path]/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/login/page": "app/login/page.js",
+  "/chats/page": "app/chats/page.js",
   "/page": "app/page.js",
-  "/login/page": "app/login/page.js"
+  "/privacy/page": "app/privacy/page.js",
+  "/terms/page": "app/terms/page.js"
 }

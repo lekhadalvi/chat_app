@@ -10,4 +10,4 @@ logs/
 
 # Build output
 dist/
-tsconfig.json
+*.tsbuildinfo

@@ -27,7 +27,7 @@ export const userService = {
     return data;
   },
 
-  async updateUsername(token: string, newName: string): Promise<{ message: string }> {
+  async updateUsername(token: string, newName: string): Promise<{ message: string; token?: string; user?: any }> {
     const res = await fetch(`${USER_SERVICE_URL}/api/v1/updatename`, {
       method: "POST",
       headers: {

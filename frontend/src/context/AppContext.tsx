@@ -220,7 +220,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!token) return;
 
     try {
-      await userService.updateUsername(token, newName);
+      const res = await userService.updateUsername(token, newName);
+      if (res?.token) {
+        localStorage.setItem("zap_token", res.token);
+      }
       setUser((prev) => ({
         ...prev,
         name: newName
