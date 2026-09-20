@@ -10,7 +10,7 @@ interface ProfileFormInput {
 }
 
 export function ProfileView() {
-  const { user: currentUser, updateName: onUpdateName } = useAuth();
+  const { user: currentUser, updateName: onUpdateName, logout } = useAuth();
   const { setActiveTab } = useChat();
 
   const onBackToChats = () => setActiveTab("chats");
@@ -219,6 +219,19 @@ export function ProfileView() {
                     <div className="inline-block mt-3 bg-zap-yellow text-black font-lilita text-xs py-2 px-5 border-[3px] border-black rounded-sm shadow-[3px_3.5px_0px_#000] transform -rotate-[3deg]">
                       Online & Hyped! ⚡
                     </div>
+
+                    {/* Prominent Log Out Button */}
+                    <button
+                      onClick={logout}
+                      className="w-full mt-6 py-2.5 px-4 bg-[#FF5E5E] text-white font-lilita text-sm uppercase tracking-wider border-[3px] border-black rounded-sm shadow-[3.5px_3.5px_0px_#000] cursor-pointer hover:bg-red-600 hover:translate-x-[0.5px] hover:translate-y-[0.5px] hover:shadow-[2.5px_2.5px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-2"
+                    >
+                      <svg viewBox="0 0 24 24" className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
+                      </svg>
+                      <span>LOG OUT OF ZAP! ⚡</span>
+                    </button>
                   </div>
                 )}
               </div>

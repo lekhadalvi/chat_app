@@ -61,10 +61,22 @@ export default function LoginPage() {
       localStorage.setItem("zap_pending_chat", chatIdParam);
     }
 
+    const ONE_DAY_MS = 24 * 60 * 60 * 1000;
     const token = localStorage.getItem("zap_token");
+    const loginTimeStr = localStorage.getItem("zap_login_time");
+
     if (token) {
-      router.push(chatIdParam ? `/chats?chatId=${chatIdParam}` : "/chats");
-      return;
+      if (loginTimeStr && Date.now() - parseInt(loginTimeStr, 10) >= ONE_DAY_MS) {
+        // Session expired after 1 day -> clear credentials
+        localStorage.removeItem("zap_token");
+        localStorage.removeItem("zap_user_name");
+        localStorage.removeItem("zap_authenticated");
+        localStorage.removeItem("zap_login_time");
+        localStorage.removeItem("zap_pending_chat");
+      } else {
+        router.push(chatIdParam ? `/chats?chatId=${chatIdParam}` : "/chats");
+        return;
+      }
     }
 
     if (emailParam) {
@@ -159,6 +171,7 @@ export default function LoginPage() {
         localStorage.setItem("zap_user_name", finalName);
         localStorage.setItem("zap_authenticated", "true");
         localStorage.setItem("zap_token", finalToken);
+        localStorage.setItem("zap_login_time", Date.now().toString());
 
         const pendingChat = localStorage.getItem("zap_pending_chat");
         // Redirect to chats dashboard after 800ms

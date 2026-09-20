@@ -11,9 +11,10 @@ interface ChatListProps {
   onToggleSidebar?: () => void; // Trigger hamburger menu click
   onTabChange?: (tab: string) => void;
   onCreateChatClick?: () => void;
+  onLogoutClick?: () => void;
 }
 
-export function ChatList({ chats, activeChatId, onSelectChat, onToggleSidebar, onTabChange, onCreateChatClick }: ChatListProps) {
+export function ChatList({ chats, activeChatId, onSelectChat, onToggleSidebar, onTabChange, onCreateChatClick, onLogoutClick }: ChatListProps) {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("chats");
 
@@ -27,7 +28,6 @@ export function ChatList({ chats, activeChatId, onSelectChat, onToggleSidebar, o
       {/* ----------------- MOBILE HEADER ----------------- */}
       <div className="md:hidden bg-zap-yellow p-4 border-b-[3.5px] border-black flex items-center justify-between">
         <div className="flex items-center gap-3">
-          
           <button 
             onClick={onToggleSidebar}
             className="text-black focus:outline-none w-8 h-8 flex items-center justify-center border-2 border-black rounded-sm shadow-[1.5px_1.5px_0px_#000] bg-white active:translate-y-[1px]"
@@ -38,42 +38,43 @@ export function ChatList({ chats, activeChatId, onSelectChat, onToggleSidebar, o
           </button>
          
           <h2 className="font-lilita text-xl italic uppercase tracking-wider transform -skew-x-12 select-none" style={{ WebkitTextStroke: "1px black" }}>
-            ZAP! CHAT YO 🤘 Let's Chat
+            ZAP! CHAT YO 🤘
           </h2>
         </div>
-        {/* Top-Right Avatar */}
-        {/* <Avatar name="GamerTag 99" color="var(--color-zap-purple)" size="sm" isOnline={true} /> */}
+        
+        {/* Mobile Logout Button */}
+        {onLogoutClick && (
+          <button
+            onClick={onLogoutClick}
+            className="w-8 h-8 bg-[#FF5E5E] border-2 border-black rounded-sm shadow-[1.5px_1.5px_0px_#000] flex items-center justify-center text-white cursor-pointer active:translate-y-[1px]"
+            title="Log Out of ZAP!"
+          >
+            <svg viewBox="0 0 24 24" className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+          </button>
+        )}
       </div>
 
-      {/* ----------------- STORIES BAR (MOBILE ONLY) ----------------- */}
-      {/* <div className="md:hidden flex gap-4 p-4 overflow-x-auto border-b-[3.5px] border-black bg-[#f8f7f3]">
-       
-        <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
-          <div className="w-12 h-12 bg-white border-[3px] border-black rounded-[10px] shadow-[2.5px_2.5px_0px_#000] flex items-center justify-center font-lilita text-lg">
-            +
-          </div>
-          <span className="font-lilita text-[10px] uppercase text-black/60">YOU</span>
-        </div>
-
-        <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
-          <Avatar name="Kiki" color="var(--color-zap-pink)" size="md" shape="square" borderColor="#FF00E0" className="w-12 h-12" />
-          <span className="font-lilita text-[10px] uppercase text-black/70">Kiki</span>
-        </div>
-
-        <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
-          <Avatar name="Jax" color="var(--color-zap-yellow)" size="md" shape="square" borderColor="var(--color-zap-yellow)" className="w-12 h-12" />
-          <span className="font-lilita text-[10px] uppercase text-black/70">Jax</span>
-        </div>
-
-        <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
-          <Avatar name="Mia" color="var(--color-zap-cyan)" size="md" shape="square" borderColor="var(--color-zap-cyan)" className="w-12 h-12" />
-          <span className="font-lilita text-[10px] uppercase text-black/70">Mia</span>
-        </div>
-      </div> */}
-
-      {/* ----------------- DESKTOP TITLE ----------------- */}
-      <div className="hidden md:block p-4 pb-0">
-        <h2 className="font-lilita text-2xl uppercase tracking-wider">ZAP! CHAT YO 🤘 Let's Chat</h2>
+      {/* ----------------- DESKTOP TITLE & LOGOUT ----------------- */}
+      <div className="hidden md:flex p-4 pb-0 items-center justify-between">
+        <h2 className="font-lilita text-2xl uppercase tracking-wider">ZAP! CHAT YO 🤘</h2>
+        {onLogoutClick && (
+          <button
+            onClick={onLogoutClick}
+            className="px-2.5 py-1 bg-[#FF5E5E] text-white border-2 border-black rounded-sm shadow-[2px_2px_0px_#000] font-lilita text-xs uppercase cursor-pointer hover:bg-red-600 hover:translate-x-[0.5px] hover:translate-y-[0.5px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center gap-1"
+            title="Log Out of ZAP!"
+          >
+            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            <span>LOGOUT</span>
+          </button>
+        )}
       </div>
 
       {/* ----------------- SEARCH BAR ----------------- */}

@@ -57,17 +57,59 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // 1. Verify Authentication & Load Profile
+  // 1. Logout Handler
+  const logout = useCallback(() => {
+    setUser({
+      id: "",
+      name: "",
+      email: "",
+      avatarColor: "var(--color-zap-purple)",
+      isOnline: false
+    });
+    setChats([]);
+    setActiveChatId("");
+    authService.logout();
+  }, []);
+
+  // 2. Verify Authentication, Profile, & Check 1-day Expiry
   const verifyAuth = useCallback(async () => {
     const token = localStorage.getItem("zap_token");
-    if (!token) {
+    const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+    const isExpired = (): boolean => {
+      if (!token) return true;
+      try {
+        const loginTimeStr = localStorage.getItem("zap_login_time");
+        if (loginTimeStr) {
+          const loginTime = parseInt(loginTimeStr, 10);
+          if (!isNaN(loginTime) && Date.now() - loginTime >= ONE_DAY_MS) {
+            return true;
+          }
+        }
+        const parts = token.split(".");
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1]));
+          if (payload.exp && payload.exp * 1000 <= Date.now()) {
+            return true;
+          }
+        }
+      } catch {
+        // Continue to server verification if decoding fails
+      }
+      return false;
+    };
+
+    if (!token || isExpired()) {
       setLoading(false);
-      router.push("/login");
+      logout();
       return;
     }
 
     try {
       const data = await userService.fetchMe(token);
+      if (!localStorage.getItem("zap_login_time")) {
+        localStorage.setItem("zap_login_time", Date.now().toString());
+      }
       setUser({
         id: data._id,
         name: data.name,
@@ -77,12 +119,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       });
     } catch (err) {
       console.error("Auth check failed", err);
-      localStorage.clear();
-      router.push("/login");
+      logout();
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [logout]);
 
   // 2. Fetch Chat List from Database
   const fetchChatsList = useCallback(async () => {
@@ -238,11 +279,53 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // 6. Logout
-  const logout = () => {
-    authService.logout();
-    router.push("/login");
-  };
+  // 6. Monitor session and auto-logout after 1 day
+  useEffect(() => {
+    const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+    const checkSessionExpiry = () => {
+      const token = localStorage.getItem("zap_token");
+      if (!token) return;
+
+      const loginTimeStr = localStorage.getItem("zap_login_time");
+      if (loginTimeStr) {
+        const loginTime = parseInt(loginTimeStr, 10);
+        if (!isNaN(loginTime) && Date.now() - loginTime >= ONE_DAY_MS) {
+          console.warn("[ZAP! Auth] 1-day session expired. Auto-logging out...");
+          logout();
+          return;
+        }
+      }
+
+      try {
+        const parts = token.split(".");
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1]));
+          if (payload.exp && payload.exp * 1000 <= Date.now()) {
+            console.warn("[ZAP! Auth] JWT token expired. Auto-logging out...");
+            logout();
+          }
+        }
+      } catch {
+        // Ignore parsing errors
+      }
+    };
+
+    // Check periodically every 30 seconds
+    const interval = setInterval(checkSessionExpiry, 30000);
+
+    // Also check when tab becomes active/visible again
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        checkSessionExpiry();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [logout]);
 
   // 7. Fetch all users list when Create Chat modal opens
   useEffect(() => {

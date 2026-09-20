@@ -10,7 +10,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useChat } from "../../hooks/useChat";
 
 export function AppShell() {
-  const { user, updateName } = useAuth();
+  const { user, updateName, logout } = useAuth();
   const {
     chats,
     activeChatId,
@@ -76,6 +76,7 @@ export function AppShell() {
               setActiveTab(tab);
             }}
             onAddFriendClick={() => setShowCreateChatModal(true)}
+            onLogoutClick={logout}
           />
         </div>
         {/* Profile Content Pane */}
@@ -98,6 +99,7 @@ export function AppShell() {
             setActiveTab(tab);
           }}
           onAddFriendClick={() => setShowCreateChatModal(true)}
+          onLogoutClick={logout}
         />
       </div>
 
@@ -122,6 +124,10 @@ export function AppShell() {
                 setShowDrawer(false);
                 setShowCreateChatModal(true);
               }}
+              onLogoutClick={() => {
+                setShowDrawer(false);
+                logout();
+              }}
             />
           </div>
         </div>
@@ -138,6 +144,7 @@ export function AppShell() {
           onSelectChat={handleSelectChat}
           onToggleSidebar={() => setShowDrawer(true)}
           onCreateChatClick={() => setShowCreateChatModal(true)}
+          onLogoutClick={logout}
         />
       </div>
 

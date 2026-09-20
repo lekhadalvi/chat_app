@@ -32,6 +32,13 @@ export const authService = {
   },
 
   logout() {
-    localStorage.clear();
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("zap_token");
+      localStorage.removeItem("zap_user_name");
+      localStorage.removeItem("zap_authenticated");
+      localStorage.removeItem("zap_login_time");
+      localStorage.removeItem("zap_pending_chat");
+      window.location.href = "/login";
+    }
   }
 };

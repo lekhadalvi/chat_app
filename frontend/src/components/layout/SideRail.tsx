@@ -8,9 +8,10 @@ interface SideRailProps {
   activeTab?: string;
   onTabChange?: (tab: string) => void;
   onAddFriendClick?: () => void;
+  onLogoutClick?: () => void;
 }
 
-export function SideRail({ currentUser, activeTab = "chats", onTabChange, onAddFriendClick }: SideRailProps) {
+export function SideRail({ currentUser, activeTab = "chats", onTabChange, onAddFriendClick, onLogoutClick }: SideRailProps) {
   const tabs = [
     {
       id: "chats",
@@ -90,14 +91,20 @@ export function SideRail({ currentUser, activeTab = "chats", onTabChange, onAddF
         })}
       </div> */}
 
-      {/* Bottom Yellow Plus Add Button (Triggers invite modal) */}
-      {/* <button
-        onClick={onAddFriendClick}
-        className="w-11 h-11 bg-zap-yellow text-black border-[3px] border-black rounded-full shadow-[2.5px_2.5px_0px_#000] flex items-center justify-center font-lilita text-xl font-bold cursor-pointer hover:translate-x-[0.5px] hover:translate-y-[0.5px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
-        title="Add Chat"
-      >
-        +
-      </button> */}
+      {/* Bottom Logout Button */}
+      {onLogoutClick && (
+        <button
+          onClick={onLogoutClick}
+          className="w-11 h-11 bg-[#FF5E5E] text-white border-[3px] border-black rounded-sm shadow-[3px_3px_0px_#000] flex items-center justify-center font-lilita cursor-pointer hover:bg-red-600 hover:translate-x-[0.5px] hover:translate-y-[0.5px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+          title="Log Out of ZAP! ⚡"
+        >
+          <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }
